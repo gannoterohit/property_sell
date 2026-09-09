@@ -78,11 +78,20 @@
                 <a href="{{ route('home') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('home') ? 'bg-indigo-50 text-indigo-600' : '' }}">
                     <i class="fas fa-home w-5 text-indigo-500"></i> Home
                 </a>
-                <a href="{{ route('rooms.index') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('rooms.index') ? 'bg-indigo-50 text-indigo-600' : '' }}">
-                    <i class="fas fa-search w-5 text-indigo-500"></i> Browse Properties
+                <a href="{{ route('rooms.index', ['purpose' => 'sell']) }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-purple-50 transition font-bold {{ request('purpose') === 'sell' ? 'bg-purple-50 text-purple-700' : 'text-purple-700' }}">
+                    <i class="fas fa-tag w-5 text-purple-600"></i> Properties For Sale (Buy)
+                </a>
+                <a href="{{ route('rooms.index', ['purpose' => 'rent']) }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request('purpose') === 'rent' ? 'bg-indigo-50 text-indigo-600' : '' }}">
+                    <i class="fas fa-key w-5 text-indigo-500"></i> Properties For Rent
+                </a>
+                <a href="{{ route('rooms.index') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('rooms.index') && !request()->filled('purpose') ? 'bg-indigo-50 text-indigo-600' : '' }}">
+                    <i class="fas fa-search w-5 text-indigo-500"></i> All Properties
                 </a>
                 <a href="{{ route('rooms.map') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('rooms.map') ? 'bg-indigo-50 text-indigo-600' : '' }}">
                     <i class="fas fa-map-marked-alt w-5 text-indigo-500"></i> Map View
+                </a>
+                <a href="{{ route('agencies.index') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('agencies.*') ? 'bg-indigo-50 text-indigo-600' : '' }}">
+                    <i class="fas fa-building-user w-5 text-indigo-500"></i> Verified Agencies
                 </a>
                 <a href="{{ route('blogs.index') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-indigo-50 transition text-gray-700 font-bold {{ request()->routeIs('blogs.*') ? 'bg-indigo-50 text-indigo-600' : '' }}">
                     <i class="fas fa-newspaper w-5 text-indigo-500"></i> Blog
@@ -127,7 +136,7 @@
                 @auth
                     @if(Auth::user()->role === 'owner')
                         <a href="{{ route('owner.rooms.create') }}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-green-50 transition text-gray-700 font-bold">
-                            <i class="fas fa-plus-circle w-5 text-green-500"></i> List New Room
+                            <i class="fas fa-plus-circle w-5 text-green-500"></i> Post Property (Rent / Sell)
                         </a>
                     @endif
                     @if(\App\Models\Setting::isEnabled('referral_enabled', true))

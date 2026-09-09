@@ -42,6 +42,11 @@
                 <option value="active" @selected(request('status')==='active')>Active</option>
                 <option value="booked" @selected(request('status')==='booked')>Rented / booked</option>
             </select>
+            <select name="purpose" class="h-10 rounded-xl text-xs font-semibold">
+                <option value="">All Purposes</option>
+                <option value="rent" @selected(request('purpose')==='rent')>Rent</option>
+                <option value="sell" @selected(request('purpose')==='sell')>Sell</option>
+            </select>
             <select name="city" class="h-10 rounded-xl text-xs">
                 <option value="">City</option>
                 @foreach($cities as $city)
@@ -121,7 +126,7 @@
                         <th><input id="selectAllRooms" type="checkbox"></th>
                         <th>Property</th>
                         <th>Owner / KYC</th>
-                        <th>Location & rent</th>
+                        <th>Location &amp; Price</th>
                         <th>Approval / Status</th>
                         <th>Property type</th>
                         <th class="text-right w-[190px]">Actions</th>
@@ -177,7 +182,11 @@
                             </td>
                             <td class="px-4">
                                 <p class="text-xs">{{ $room->city }}</p>
-                                <p class="text-xs font-bold">&#8377;{{ number_format($room->rent) }}/mo</p>
+                                @if($room->isForSell())
+                                    <p class="text-xs font-bold text-purple-700"><i class="fas fa-tag text-[9px] mr-0.5"></i>{{ $room->displayPrice() }}</p>
+                                @else
+                                    <p class="text-xs font-bold">&#8377;{{ number_format($room->rent) }}/mo</p>
+                                @endif
                             </td>
                             <td class="px-4" id="room-status-td-{{ $room->id }}">
                                 <div class="flex flex-col items-start gap-1.5">

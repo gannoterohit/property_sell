@@ -51,12 +51,24 @@
             </div>
 
             <div class="ms-filter-group">
-                <label class="ms-filter-label"><i class="fas fa-indian-rupee-sign"></i> Min Rent</label>
+                <label class="ms-filter-label"><i class="fas fa-tags"></i> Purpose</label>
+                <div class="ms-select-wrap">
+                    <select id="purposeFilter" class="ms-input">
+                        <option value="">All (Rent &amp; Buy)</option>
+                        <option value="rent">For Rent</option>
+                        <option value="sell">For Sale / Buy</option>
+                    </select>
+                    <i class="fas fa-chevron-down ms-select-caret"></i>
+                </div>
+            </div>
+
+            <div class="ms-filter-group">
+                <label class="ms-filter-label"><i class="fas fa-indian-rupee-sign"></i> Min Budget</label>
                 <input type="number" id="minRent" placeholder="0" class="ms-input" min="0">
             </div>
 
             <div class="ms-filter-group">
-                <label class="ms-filter-label"><i class="fas fa-indian-rupee-sign"></i> Max Rent</label>
+                <label class="ms-filter-label"><i class="fas fa-indian-rupee-sign"></i> Max Budget</label>
                 <input type="number" id="maxRent" placeholder="Any" class="ms-input" min="0">
             </div>
 
@@ -579,18 +591,24 @@ html, body { height: 100%; margin: 0; }
         const city = escapeHtml(m.city || '');
         const area = escapeHtml(m.area || '');
         const loc = [area, city].filter(Boolean).join(', ');
-        const price = m.rent ? '₹' + Number(m.rent).toLocaleString('en-IN') : '—';
+        const isSell = Boolean(m.is_for_sell || m.purpose === 'sell');
+        const price = m.display_price || (m.rent ? '₹' + Number(m.rent).toLocaleString('en-IN') : '—');
+        const priceSuffix = isSell ? '' : ' <small>/mo</small>';
+        const badge = isSell
+            ? `<span style="display:inline-block;padding:2px 8px;border-radius:6px;background:#7c3aed;color:#ffffff;font-size:10px;font-weight:800;letter-spacing:0.5px;margin-bottom:6px;">FOR SALE</span>`
+            : '';
         const img = m.thumb ? `<img class="ms-popup-img" src="${escapeHtml(m.thumb)}" alt="${title}" onerror="this.style.display='none'">` : '';
         const url = m.url || '#';
         return `
             <div class="ms-popup">
                 ${img}
                 <div class="ms-popup-body">
+                    ${badge}
                     <h4 class="ms-popup-title">${title}</h4>
                     ${loc ? `<p class="ms-popup-loc"><i class="fas fa-map-marker-alt"></i> ${loc}</p>` : ''}
                     <div class="ms-popup-meta">
-                        <div class="ms-popup-price">${price} <small>/mo</small></div>
-                        <a class="ms-popup-link" href="${escapeHtml(url)}">View <i class="fas fa-arrow-right text-[9px]"></i></a>
+                        <div class="ms-popup-price" style="${isSell ? 'color:#7c3aed;' : ''}">${price}${priceSuffix}</div>
+                        <a class="ms-popup-link" href="${escapeHtml(url)}" style="${isSell ? 'background:#7c3aed;' : ''}">View <i class="fas fa-arrow-right text-[9px]"></i></a>
                     </div>
                 </div>
             </div>`;
@@ -655,11 +673,13 @@ html, body { height: 100%; margin: 0; }
         $('searchBtn').addEventListener('click', manualSearch);
         $('resetBtn').addEventListener('click', resetFilters);
 
-        ['cityFilter'].forEach(id => {
-            $(id).addEventListener('change', manualSearch);
+        ['cityFilter', 'purposeFilter'].forEach(id => {
+            const el = $(id);
+            if (el) el.addEventListener('change', manualSearch);
         });
         ['minRent', 'maxRent'].forEach(id => {
-            $(id).addEventListener('input', debounce(manualSearch, 600));
+            const el = $(id);
+            if (el) el.addEventListener('input', debounce(manualSearch, 600));
         });
     }
 
@@ -674,12 +694,20 @@ html, body { height: 100%; margin: 0; }
         showLoading(true);
 
         const params = new URLSearchParams();
-        const city = $('cityFilter').value;
-        const minRent = $('minRent').value;
-        const maxRent = $('maxRent').value;
+        const city = $('cityFilter') ? $('cityFilter').value : '';
+        const purpose = $('purposeFilter') ? $('purposeFilter').value : '';
+        const minRent = $('minRent') ? $('minRent').value : '';
+        const maxRent = $('maxRent') ? $('maxRent').value : '';
         if (city) params.set('city', city);
-        if (minRent) params.set('min_rent', minRent);
-        if (maxRent) params.set('max_rent', maxRent);
+        if (purpose) params.set('purpose', purpose);
+        if (minRent) {
+            if (purpose === 'sell') params.set('min_price', minRent);
+            else params.set('min_rent', minRent);
+        }
+        if (maxRent) {
+            if (purpose === 'sell') params.set('max_price', maxRent);
+            else params.set('max_rent', maxRent);
+        }
         params.set('format', 'json');
 
         const url = `${window.location.pathname}?${params.toString()}`;
@@ -716,9 +744,10 @@ html, body { height: 100%; margin: 0; }
     }
 
     function resetFilters() {
-        $('cityFilter').value = '';
-        $('minRent').value = '';
-        $('maxRent').value = '';
+        if ($('cityFilter')) $('cityFilter').value = '';
+        if ($('purposeFilter')) $('purposeFilter').value = '';
+        if ($('minRent')) $('minRent').value = '';
+        if ($('maxRent')) $('maxRent').value = '';
 
         if (initialMarkers.length > 0) {
             const b = computeBounds(initialMarkers);

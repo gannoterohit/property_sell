@@ -31,9 +31,16 @@
                             <div class="market-room-copy">
                                 <h3>{{ $room->title }}</h3>
                                 <p><i class="fas fa-location-dot"></i>{{ $room->city }}</p>
-                                <span class="market-room-price">₹{{ number_format($room->rent) }} <small>/month</small></span>
-                                @if($room->deposit)
-                                    <span class="market-room-price" style="font-size:12px;color:#64748b;margin-top:2px;display:block;">₹{{ number_format($room->deposit) }} deposit</span>
+                                @if($room->isForSell())
+                                    <span class="market-room-price" style="color:#7c3aed"><i class="fas fa-tag" style="font-size:10px;margin-right:3px;"></i>{{ $room->displayPrice() }} <small>for sale</small></span>
+                                    @if($room->possession_status)
+                                        <span class="market-room-price" style="font-size:12px;color:#64748b;margin-top:2px;display:block;">{{ $room->possessionLabel() }}</span>
+                                    @endif
+                                @else
+                                    <span class="market-room-price">₹{{ number_format($room->rent) }} <small>/month</small></span>
+                                    @if($room->deposit)
+                                        <span class="market-room-price" style="font-size:12px;color:#64748b;margin-top:2px;display:block;">₹{{ number_format($room->deposit) }} deposit</span>
+                                    @endif
                                 @endif
                                 <div class="market-room-meta">
                                     <span>{{ $room->roomTypeLabel() }}</span>

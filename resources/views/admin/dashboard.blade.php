@@ -119,7 +119,38 @@
 
     <section class="dash-grid">
         @if($access['listings'])
-            @foreach([['Active listings',$activeRooms,'fa-building-circle-check','emerald'],['Pending review',$pendingRooms,'fa-clock','amber'],['Approved listings',$approvedRooms,'fa-circle-check','blue']] as [$label,$value,$icon,$tone])<article class="rounded-2xl border bg-white p-4 shadow-sm"><div class="flex justify-between"><div><p class="text-[10px] font-bold uppercase text-slate-400">{{ $label }}</p><p class="mt-2 text-2xl font-extrabold">{{ $value }}</p></div><span class="flex h-10 w-10 items-center justify-center rounded-xl bg-{{ $tone }}-50 text-{{ $tone }}-600"><i class="fas {{ $icon }}"></i></span></div></article>@endforeach
+            <article class="rounded-2xl border bg-white p-4 shadow-sm">
+                <div class="flex justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-slate-400">Active listings</p>
+                        <p class="mt-2 text-2xl font-extrabold">{{ $activeRooms }}</p>
+                        <div class="mt-1 flex items-center gap-2 text-[11px] font-bold">
+                            <span class="text-blue-600"><i class="fas fa-key text-[9px]"></i> Rent: {{ $activeRentRooms ?? 0 }}</span>
+                            <span class="text-slate-300">|</span>
+                            <span class="text-purple-600"><i class="fas fa-tag text-[9px]"></i> Sell: {{ $activeSellRooms ?? 0 }}</span>
+                        </div>
+                    </div>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><i class="fas fa-building-circle-check"></i></span>
+                </div>
+            </article>
+            <article class="rounded-2xl border bg-white p-4 shadow-sm">
+                <div class="flex justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-slate-400">Pending review</p>
+                        <p class="mt-2 text-2xl font-extrabold">{{ $pendingRooms }}</p>
+                    </div>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><i class="fas fa-clock"></i></span>
+                </div>
+            </article>
+            <article class="rounded-2xl border bg-white p-4 shadow-sm">
+                <div class="flex justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-slate-400">Approved listings</p>
+                        <p class="mt-2 text-2xl font-extrabold">{{ $approvedRooms }}</p>
+                    </div>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><i class="fas fa-circle-check"></i></span>
+                </div>
+            </article>
         @endif
         @if($access['people'])<article class="rounded-2xl border bg-white p-4 shadow-sm"><p class="text-[10px] font-bold uppercase text-slate-400">Users & owners</p><p class="mt-2 text-2xl font-extrabold">{{ $users }} <small class="text-xs text-slate-400">users</small></p><p class="text-xs text-slate-500">{{ $owners }} property owners</p></article>@endif
         @if($access['brokers'])<article class="rounded-2xl border bg-white p-4 shadow-sm"><p class="text-[10px] font-bold uppercase text-slate-400">Brokers</p><p class="mt-2 text-2xl font-extrabold">{{ $brokers }} <small class="text-xs text-slate-400">total</small></p><p class="text-xs text-slate-500">{{ $approvedBrokers }} approved · {{ $pendingBrokers }} pending</p></article>@endif

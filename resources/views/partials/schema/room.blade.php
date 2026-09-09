@@ -6,7 +6,7 @@
   "@context": "https://schema.org",
   "@type": "Product",
   "name": "{{ $room->title }}",
-  "description": "{{ $room->description ?? 'Room for rent' }}",
+  "description": "{{ $room->description ?? ($room->isForSell() ? 'Property for sale' : 'Room for rent') }}",
   "image": [
     @if($room->photos)
       @foreach(json_decode($room->photos) as $index => $photo)
@@ -18,7 +18,7 @@
     "@type": "Offer",
     "url": "{{ route('rooms.show', $room) }}",
     "priceCurrency": "INR",
-    "price": "{{ $room->rent }}",
+    "price": "{{ $room->isForSell() ? ($room->price ?? 0) : ($room->rent ?? 0) }}",
     "priceValidUntil": "{{ now()->addMonth()->format('Y-m-d') }}",
     "availability": "https://schema.org/InStock",
     "itemCondition": "https://schema.org/UsedCondition"

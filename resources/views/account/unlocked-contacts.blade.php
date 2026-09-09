@@ -20,14 +20,19 @@
                     <div class="unlock-media">
                          <img src="{{ $room->photo_url }}" alt="{{ $room->title }}" width="400" height="300" loading="lazy" onerror="this.src='{{ asset('assets/images/default-room.svg') }}'">
                         <em class="{{ $isAvailable ? 'available' : 'unavailable' }}">
-                            {{ $isAvailable ? 'Available' : 'Rented / unavailable' }}
+                            {{ $isAvailable ? 'Available' : ($room->isForSell() ? 'Sold / unavailable' : 'Rented / unavailable') }}
                         </em>
                     </div>
 
                     <div class="unlock-copy">
                         <div class="unlock-price">
-                            <strong>₹{{ number_format((float) $room->rent) }}</strong>
-                            <span>/ month</span>
+                            @if($room->isForSell())
+                                <strong style="color: #7c3aed;">{{ $room->displayPrice() }}</strong>
+                                <span style="background:#f3e8ff;color:#7c3aed;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;margin-left:4px;">FOR SALE</span>
+                            @else
+                                <strong>₹{{ number_format((float) $room->rent) }}</strong>
+                                <span>/ month</span>
+                            @endif
                         </div>
                         <h2>{{ $room->title }}</h2>
                         <p class="unlock-location"><i class="fas fa-location-dot"></i>{{ $room->city ?: $room->address }}</p>

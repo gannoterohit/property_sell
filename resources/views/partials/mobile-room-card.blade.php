@@ -31,6 +31,16 @@
                 <span class="bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[9px] font-extrabold text-slate-800 shadow-sm uppercase tracking-wider">
                     {{ $room->roomTypeLabel() }}
                 </span>
+                {{-- Purpose badge --}}
+                @if($room->isForSell())
+                    <span class="bg-purple-600 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
+                        <i class="fas fa-tag text-[8px]"></i> For Sale
+                    </span>
+                @else
+                    <span class="bg-emerald-500 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
+                        <i class="fas fa-key text-[8px]"></i> For Rent
+                    </span>
+                @endif
                 @if($room->listing_type === 'broker')
                     <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
                         <i class="fas fa-building text-[8px]"></i> Verified Agency
@@ -117,13 +127,18 @@
         <!-- Price & Action -->
         <div class="flex items-center justify-between pt-3 border-t border-slate-100">
             <div class="flex flex-col">
-                <span class="text-xl font-black" style="color: var(--primary);">₹{{ number_format($room->rent) }}</span>
-                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Per Month</span>
+                @if($room->isForSell())
+                    <span class="text-xl font-black" style="color: var(--primary);">{{ $room->displayPrice() }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Sale Price</span>
+                @else
+                    <span class="text-xl font-black" style="color: var(--primary);">&#x20b9;{{ number_format($room->rent) }}</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Per Month</span>
+                @endif
             </div>
             
             <a href="{{ route('rooms.show', $room->id) }}" class="text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-2 min-h-[44px]" style="background: var(--primary);">
                 <i class="fas fa-phone text-[10px]"></i>
-                Contact Owner
+                {{ $room->isForSell() ? 'View Details' : 'Contact Owner' }}
             </a>
         </div>
     </div>

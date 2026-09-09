@@ -4,7 +4,7 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-black text-slate-800 text-base">Filters</h3>
-                    <a href="{{ route('rooms.index', ['clear' => 1]) }}" class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1">
+                    <a href="{{ route('rooms.index', array_filter(['clear' => 1, 'purpose' => request('purpose')])) }}" class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1">
                         <i class="fas fa-rotate-left text-[10px]"></i> Reset
                     </a>
                 </div>
@@ -39,6 +39,26 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">I'm Looking To</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label id="purposeTabRent" class="flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold py-2 rounded-xl border transition-all
+                                {{ ($currentPurpose ?? '') === 'sell' ? 'border-slate-200 text-slate-500 bg-white' : 'border-indigo-500 text-indigo-700 bg-indigo-50' }}">
+                                <input type="radio" name="purpose" value="rent"
+                                    {{ ($currentPurpose ?? '') !== 'sell' ? 'checked' : '' }}
+                                    class="hidden purpose-radio">
+                                <i class="fas fa-key text-[10px]"></i> Rent
+                            </label>
+                            <label id="purposeTabSell" class="flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold py-2 rounded-xl border transition-all
+                                {{ ($currentPurpose ?? '') === 'sell' ? 'border-purple-500 text-purple-700 bg-purple-50' : 'border-slate-200 text-slate-500 bg-white' }}">
+                                <input type="radio" name="purpose" value="sell"
+                                    {{ ($currentPurpose ?? '') === 'sell' ? 'checked' : '' }}
+                                    class="hidden purpose-radio">
+                                <i class="fas fa-tag text-[10px]"></i> Buy / Sell
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Listed By Filter -->
@@ -114,49 +134,103 @@
                         </div>
                     </div>
 
-                    <!-- Budget Range -->
-                    <div class="space-y-2">
-                        <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Budget (per month)</label>
-                        <div class="space-y-2">
-                            @php
-                                $budgetRanges = [
-                                    ['label' => 'Under ₹5,000', 'min' => 0, 'max' => 5000],
-                                    ['label' => '₹5,000 - ₹10,000', 'min' => 5000, 'max' => 10000],
-                                    ['label' => '₹10,000 - ₹15,000', 'min' => 10000, 'max' => 15000],
-                                    ['label' => '₹15,000 - ₹20,000', 'min' => 15000, 'max' => 20000],
-                                    ['label' => 'Above ₹20,000', 'min' => 20000, 'max' => 999999],
-                                ];
-                            @endphp
-                            @foreach($budgetRanges as $range)
+                    <!-- Budget Range — conditional: Rent or Sell price -->
+                    <div class="space-y-2" id="filterBudgetSection">
+                        <!-- Rent Budget (shown when purpose=rent) -->
+                        <div id="filterRentBudget" class="{{ ($currentPurpose ?? '') === 'sell' ? 'hidden' : '' }}">
+                            <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Budget (per month)</label>
+                            <div class="space-y-2">
                                 @php
-                                    $isSel = request('min_rent') == $range['min'] && request('max_rent') == $range['max'];
+                                    $budgetRanges = [
+                                        ['label' => 'Under ₹5,000',       'min' => 0,     'max' => 5000],
+                                        ['label' => '₹5,000 - ₹10,000',  'min' => 5000,  'max' => 10000],
+                                        ['label' => '₹10,000 - ₹15,000', 'min' => 10000, 'max' => 15000],
+                                        ['label' => '₹15,000 - ₹20,000', 'min' => 15000, 'max' => 20000],
+                                        ['label' => 'Above ₹20,000',       'min' => 20000, 'max' => 999999],
+                                    ];
                                 @endphp
-                                <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
-                                    <input type="radio" name="budget_range" onchange="document.querySelector('input[name=min_rent]').value='{{ $range['min'] }}'; document.querySelector('input[name=max_rent]').value='{{ $range['max'] }}';"
-                                           {{ $isSel ? 'checked' : '' }}
-                                           class="rounded border-slate-300">
-                                    <span>{{ $range['label'] }}</span>
-                                </label>
-                            @endforeach
+                                @foreach($budgetRanges as $range)
+                                    @php $isSel = request('min_rent') == $range['min'] && request('max_rent') == $range['max']; @endphp
+                                    <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
+                                        <input type="radio" name="budget_range" onchange="document.querySelector('input[name=min_rent]').value='{{ $range['min'] }}'; document.querySelector('input[name=max_rent]').value='{{ $range['max'] }}';"
+                                               {{ $isSel ? 'checked' : '' }}
+                                               class="rounded border-slate-300">
+                                        <span>{{ $range['label'] }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <div class="space-y-1">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase">Min</span>
+                                    <input type="number" name="min_rent" value="{{ request('min_rent') }}" placeholder="₹ Min"
+                                           class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase">Max</span>
+                                    <input type="number" name="max_rent" value="{{ request('max_rent') }}" placeholder="₹ Max"
+                                           class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Manual Min / Max inputs -->
-                        <div class="grid grid-cols-2 gap-2 pt-2">
-                            <div class="space-y-1">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase">Min</span>
-                                <input type="number" name="min_rent" value="{{ request('min_rent') }}" placeholder="₹ Min"
-                                       class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                        <!-- Sell Price Range (shown when purpose=sell) -->
+                        <div id="filterSellPrice" class="{{ ($currentPurpose ?? '') === 'sell' ? '' : 'hidden' }}">
+                            <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Price Range</label>
+                            <div class="space-y-2">
+                                @php
+                                    $priceRanges = [
+                                        ['label' => 'Under ₹25 L',         'min' => 0,         'max' => 2500000],
+                                        ['label' => '₹25L - ₹50L',         'min' => 2500000,   'max' => 5000000],
+                                        ['label' => '₹50L - ₹1 Cr',        'min' => 5000000,   'max' => 10000000],
+                                        ['label' => '₹1 Cr - ₹2 Cr',       'min' => 10000000,  'max' => 20000000],
+                                        ['label' => 'Above ₹2 Cr',          'min' => 20000000,  'max' => 999999999],
+                                    ];
+                                @endphp
+                                @foreach($priceRanges as $range)
+                                    @php $isPSel = request('min_price') == $range['min'] && request('max_price') == $range['max']; @endphp
+                                    <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
+                                        <input type="radio" name="price_range" onchange="document.querySelector('input[name=min_price]').value='{{ $range['min'] }}'; document.querySelector('input[name=max_price]').value='{{ $range['max'] }}';"
+                                               {{ $isPSel ? 'checked' : '' }}
+                                               class="rounded border-slate-300">
+                                        <span>{{ $range['label'] }}</span>
+                                    </label>
+                                @endforeach
                             </div>
-                            <div class="space-y-1">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase">Max</span>
-                                <input type="number" name="max_rent" value="{{ request('max_rent') }}" placeholder="₹ Max"
-                                       class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <div class="space-y-1">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase">Min (₹)</span>
+                                    <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Min Price"
+                                           class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase">Max (₹)</span>
+                                    <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Max Price"
+                                           class="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold focus:ring-2 outline-none transition-all">
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Gender Preference — dynamic from DB tenant type counts -->
-                    <div class="space-y-2">
+                    <!-- Possession Status (only for sell) -->
+                    <div id="filterPossessionSection" class="space-y-2 {{ ($currentPurpose ?? '') === 'sell' ? '' : 'hidden' }}">
+                        <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Possession Status</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
+                                <input type="radio" name="possession_status" value="" {{ !request('possession_status') ? 'checked' : '' }} class="border-slate-300"> Any
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
+                                <input type="radio" name="possession_status" value="ready_to_move" {{ request('possession_status') === 'ready_to_move' ? 'checked' : '' }} class="border-slate-300">
+                                <span class="flex items-center gap-1"><i class="fas fa-circle-check text-emerald-600 text-[10px]"></i> Ready to Move</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer hover-text-primary transition-colors">
+                                <input type="radio" name="possession_status" value="under_construction" {{ request('possession_status') === 'under_construction' ? 'checked' : '' }} class="border-slate-300">
+                                <span class="flex items-center gap-1"><i class="fas fa-hard-hat text-amber-500 text-[10px]"></i> Under Construction</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Gender Preference (hidden for sell listings) -->
+                    <div class="space-y-2" id="filterTenantSection" {{ ($currentPurpose ?? '') === 'sell' ? 'style=display:none' : '' }}>
                         <label class="text-xs font-black text-slate-700 uppercase tracking-wider block">Area (sq ft)</label>
                         <div class="grid grid-cols-2 gap-2">
                             <div class="space-y-1">
@@ -269,6 +343,45 @@
                         </button>
                     </div>
                 </form>
+
+                <script>
+                // Purpose Tab Toggle JS
+                (function() {
+                    const rentTab   = document.getElementById('purposeTabRent');
+                    const sellTab   = document.getElementById('purposeTabSell');
+                    const radios    = document.querySelectorAll('.purpose-radio');
+                    const rentBudget     = document.getElementById('filterRentBudget');
+                    const sellPrice      = document.getElementById('filterSellPrice');
+                    const possessionSec  = document.getElementById('filterPossessionSection');
+                    const tenantSec      = document.getElementById('filterTenantSection');
+
+                    function applyPurpose(isSell) {
+                        // Tab styles
+                        rentTab.className = rentTab.className.replace(/border-\S+ text-\S+ bg-\S+/g, '');
+                        sellTab.className = sellTab.className.replace(/border-\S+ text-\S+ bg-\S+/g, '');
+                        if (isSell) {
+                            rentTab.classList.add('border-slate-200','text-slate-500','bg-white');
+                            sellTab.classList.add('border-purple-500','text-purple-700','bg-purple-50');
+                        } else {
+                            rentTab.classList.add('border-indigo-500','text-indigo-700','bg-indigo-50');
+                            sellTab.classList.add('border-slate-200','text-slate-500','bg-white');
+                        }
+                        // Show/hide budget sections
+                        rentBudget.classList.toggle('hidden', isSell);
+                        sellPrice.classList.toggle('hidden', !isSell);
+                        // Show/hide possession section
+                        if (possessionSec) possessionSec.classList.toggle('hidden', !isSell);
+                        // Show/hide tenant type section
+                        if (tenantSec) tenantSec.style.display = isSell ? 'none' : '';
+                    }
+
+                    radios.forEach(r => r.addEventListener('change', () => applyPurpose(r.value === 'sell')));
+                    [rentTab, sellTab].forEach(tab => tab.addEventListener('click', () => {
+                        const r = tab.querySelector('input');
+                        if (r) { r.checked = true; applyPurpose(r.value === 'sell'); }
+                    }));
+                })();
+                </script>
             </div>
 
         </div>

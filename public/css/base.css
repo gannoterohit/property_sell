@@ -153,42 +153,7 @@
             margin-bottom: 0.875rem;
         }
 
-        /* Keep the desktop navbar identical for guests and signed-in users. */
-        .desktop-navbar-inner {
-            width: min(1280px, calc(100% - 32px));
-            margin: 0 auto;
-            padding-inline: 0;
-        }
-
-        .desktop-navbar-row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-            align-items: center;
-            height: 4rem;
-            overflow: visible;
-        }
-
-        .desktop-navbar-logo {
-            justify-self: start;
-        }
-
-        .desktop-navbar-menu {
-            justify-self: center;
-        }
-
-        .desktop-navbar-menu a {
-            font-size: 0.875rem !important;
-            line-height: 1.25rem;
-        }
-
-        .desktop-navbar-actions {
-            justify-self: end;
-            overflow: visible;
-        }
-
-        .desktop-navbar-actions a {
-            font-size: 0.875rem;
-        }
+        /* Desktop navbar styles are maintained in public/css/navbar.css */
 
         .theme-brand-mark,
         .theme-primary-button {
@@ -325,11 +290,6 @@
             }
         }
 
-        @media (max-width: 1279px) {
-            .desktop-navbar-inner {
-                padding-inline: 1.5rem;
-            }
-        }
         /* App-like Bottom Navigation */
         .bottom-nav {
             position: fixed;

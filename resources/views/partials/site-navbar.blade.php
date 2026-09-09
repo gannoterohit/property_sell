@@ -8,7 +8,7 @@
     }
     $cmsPageLive = fn (string $slug): bool => $publishedCmsSlugs->has($slug);
 @endphp
-<link rel="stylesheet" href="{{ asset('css/navbar.css') }}">
+<link rel="stylesheet" href="{{ asset('css/navbar.css') }}?v={{ file_exists(public_path('css/navbar.css')) ? filemtime(public_path('css/navbar.css')) : '2.1' }}">
     <!-- Mobile App Header - Enhanced App Style -->
     <div class="mobile-app-header lg:hidden">
         <div class="header-left">
@@ -62,40 +62,57 @@
                     @endif
                 </a>
                 
-                <!-- Center Links -->
-                <div class="desktop-navbar-menu hidden lg:flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-xl p-1">
-                    <a href="{{ route('home') }}" class="theme-nav-link {{ request()->routeIs('home') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition">Home</a>
+                <!-- Center Navigation Tabs -->
+                <div class="desktop-navbar-center">
+                    <nav class="desktop-navbar-menu" aria-label="Main navigation">
+                        <a href="{{ route('home') }}" class="nav-tab {{ request()->routeIs('home') ? 'nav-tab-active' : '' }}">Home</a>
 
-                    <div class="relative" id="browse-dropdown-wrapper">
-                        <button id="browse-dropdown-btn" type="button" class="theme-nav-link {{ request()->routeIs('rooms.*') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition inline-flex items-center gap-1">
-                            Browse Properties <i class="fas fa-chevron-down text-[9px] opacity-60"></i>
-                        </button>
-                        <div id="browse-dropdown-panel" class="hidden absolute left-0 mt-2 w-48 rounded-xl border border-slate-100 bg-white shadow-xl z-50 overflow-hidden">
-                            <a href="{{ route('rooms.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition">
-                                <i class="fas fa-th-list text-indigo-500 w-4"></i> List View
-                            </a>
-                            <a href="{{ route('rooms.map') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
-                                <i class="fas fa-map-marked-alt text-indigo-500 w-4"></i> Map View
-                            </a>
-                            <a href="{{ route('agencies.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
-                                <i class="fas fa-building-user text-indigo-500 w-4"></i> Verified Agencies Directory
-                            </a>
+                        <a href="{{ route('rooms.index', ['purpose' => 'sell']) }}" class="nav-tab {{ request('purpose') === 'sell' ? 'nav-tab-active' : '' }}">
+                            Buy <span class="nav-tab-badge">Hot</span>
+                        </a>
+
+                        <a href="{{ route('rooms.index', ['purpose' => 'rent']) }}" class="nav-tab {{ request('purpose') === 'rent' ? 'nav-tab-active' : '' }}">
+                            Rent
+                        </a>
+
+                        <div class="relative" id="browse-dropdown-wrapper">
+                            <button id="browse-dropdown-btn" type="button" class="nav-tab {{ request()->routeIs('rooms.*') && !request()->filled('purpose') ? 'nav-tab-active' : '' }}">
+                                Browse <i class="fas fa-chevron-down nav-dropdown-icon"></i>
+                            </button>
+                            <div id="browse-dropdown-panel" class="hidden absolute left-1/2 -translate-x-1/2 mt-2 w-56 rounded-2xl border border-slate-100 bg-white shadow-xl z-50 overflow-hidden py-1">
+                                <a href="{{ route('rooms.index', ['purpose' => 'sell']) }}" class="flex items-center justify-between px-4 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-50 transition">
+                                    <span class="flex items-center gap-2"><i class="fas fa-tag text-purple-600 w-4"></i> Properties For Sale</span>
+                                    <span class="bg-purple-100 text-purple-700 text-[9px] px-1.5 py-0.5 rounded font-black">BUY</span>
+                                </a>
+                                <a href="{{ route('rooms.index', ['purpose' => 'rent']) }}" class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
+                                    <span class="flex items-center gap-2"><i class="fas fa-key text-indigo-500 w-4"></i> Properties For Rent</span>
+                                    <span class="bg-indigo-50 text-indigo-700 text-[9px] px-1.5 py-0.5 rounded font-bold">RENT</span>
+                                </a>
+                                <a href="{{ route('rooms.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
+                                    <i class="fas fa-th-list text-slate-400 w-4"></i> All Properties
+                                </a>
+                                <a href="{{ route('rooms.map') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
+                                    <i class="fas fa-map-marked-alt text-indigo-500 w-4"></i> Map View
+                                </a>
+                                <a href="{{ route('agencies.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition border-t border-slate-50">
+                                    <i class="fas fa-building-user text-indigo-500 w-4"></i> Verified Agencies
+                                </a>
+                            </div>
                         </div>
-                    </div>
 
-                    @if($cmsPageLive('how-it-works'))
-                        <a href="{{ route('pages.how-it-works') }}" class="theme-nav-link {{ request()->routeIs('pages.how-it-works') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition">How It Works</a>
-                    @endif
-                    <a href="{{ Auth::check() ? (Auth::user()->role === 'owner' ? route('owner.dashboard') : route('dashboard')) : route('register', ['role' => 'owner']) }}" class="theme-nav-link {{ request()->routeIs('owner.*') || (request()->routeIs('register') && request('role') === 'owner') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition">For Owners</a>
-                    <a href="{{ route('blogs.index') }}" class="theme-nav-link {{ request()->routeIs('blogs.*') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition">Blog</a>
-                    <a href="{{ route('pages.contact') }}" class="theme-nav-link {{ request()->routeIs('pages.contact') ? 'theme-nav-link-active' : '' }} px-3 py-2 rounded-lg text-slate-600 hover:bg-white text-xs font-bold transition">Contact Us</a>
+                        <a href="{{ Auth::check() ? (Auth::user()->role === 'owner' ? route('owner.dashboard') : route('dashboard')) : route('register', ['role' => 'owner']) }}" class="nav-tab {{ request()->routeIs('owner.*') || (request()->routeIs('register') && request('role') === 'owner') ? 'nav-tab-active' : '' }}">For Owners</a>
+
+                        <a href="{{ route('blogs.index') }}" class="nav-tab {{ request()->routeIs('blogs.*') ? 'nav-tab-active' : '' }}">Blog</a>
+
+                        <a href="{{ route('pages.contact') }}" class="nav-tab {{ request()->routeIs('pages.contact') ? 'nav-tab-active' : '' }}">Contact</a>
+                    </nav>
                 </div>
                 
                 <!-- Right Side Actions -->
-                <div class="desktop-navbar-actions flex items-center justify-end gap-3" style="overflow: visible;">
+                <div class="desktop-navbar-actions">
                     <!-- Wishlist Icon (Heart) -->
-                    <a href="{{ route('wishlist.index') }}" class="h-10 w-10 shrink-0 inline-flex items-center justify-center text-slate-600 hover:text-red-500 transition-colors relative" title="My Wishlist">
-                        <i class="far fa-heart text-lg"></i>
+                    <a href="{{ route('wishlist.index') }}" class="desktop-wishlist-btn" title="My Wishlist">
+                        <i class="far fa-heart text-base"></i>
                     </a>
                     
                     @auth
@@ -223,24 +240,21 @@
                         <!-- Post Property Button for Logged In -->
                         @if(Auth::user()->role === 'owner')
                             <a href="{{ route('owner.rooms.create') }}"
-                               class="theme-primary-button h-10 px-4 rounded-xl text-sm font-bold transition-all duration-200 shadow-md flex items-center gap-1.5 whitespace-nowrap">
+                               class="theme-primary-button h-9 px-3.5 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs flex items-center gap-1.5 whitespace-nowrap">
                                 <i class="fas fa-plus text-xs"></i> Post Property
                             </a>
                         @endif
                     @else
                         <!-- Guest Actions -->
-                        <button type="button" data-auth-trigger="login"
-                           class="theme-nav-link h-10 inline-flex items-center text-slate-700 font-bold transition-colors duration-200 text-sm px-3 whitespace-nowrap bg-transparent border-0 cursor-pointer">
+                        <button type="button" data-auth-trigger="login" class="nav-btn-login">
                             Login
                         </button>
-                                <a href="{{ route('register') }}"
-                                    class="theme-primary-button h-10 inline-flex items-center px-4 rounded-xl text-sm font-bold transition-all duration-200 shadow-md whitespace-nowrap">
+                        <a href="{{ route('register') }}" class="nav-btn-signup">
                             Sign Up
-                                </a>
-                                <a href="{{ route('register') }}?role=owner"
-                                    class="theme-secondary-button h-10 inline-flex items-center border px-4 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap">
+                        </a>
+                        <a href="{{ route('register') }}?role=owner" class="nav-btn-post">
                             Post Property
-                                </a>
+                        </a>
                     @endauth
                 </div>
             </div>

@@ -56,13 +56,18 @@
                     @php
                         $st = $property->status;
                         $badgeClass = $st === 'active' ? 'badge-active' : ($st === 'pending' ? 'badge-pending' : ($st === 'booked' ? 'badge-booked' : 'badge-default'));
-                        $label = $st === 'booked' ? 'Rented' : ucfirst($st);
+                        $label = $st === 'booked' ? ($property->isForSell() ? 'Sold' : 'Rented') : ucfirst($st);
                     @endphp
                     <article class="owner-room-card">
                         <div class="owner-room-media">
                             <div class="owner-room-placeholder"><i class="fas fa-house"></i></div>
                             @if($property->photo_url)
                                 <img src="{{ $property->photo_url }}" alt="{{ $property->title }}" width="400" height="300" loading="lazy" onerror="this.style.display='none'">
+                            @endif
+                            @if($property->isForSell())
+                                <span class="owner-room-status-badge" style="left: 12px; right: auto; background: #7c3aed; color: #ffffff; font-weight: 800; font-size: 10px; letter-spacing: 0.5px;">
+                                    FOR SALE
+                                </span>
                             @endif
                             <span class="owner-room-status-badge {{ $badgeClass }}">
                                 <span class="badge-dot"></span>{{ $label }}
@@ -75,8 +80,8 @@
                                     <p class="owner-room-loc"><i class="fas fa-location-dot"></i>{{ $property->city }}{{ $property->state ? ', '.$property->state : '' }}</p>
                                 </div>
                                 <div class="owner-room-price">
-                                    <span class="owner-room-price-amt">&#8377;{{ number_format($property->rent) }}</span>
-                                    <span class="owner-room-price-unit">per month</span>
+                                    <span class="owner-room-price-amt">{{ $property->displayPrice() }}</span>
+                                    <span class="owner-room-price-unit">{{ $property->isForSell() ? 'Total Price' : 'per month' }}</span>
                                 </div>
                             </div>
 
@@ -115,7 +120,8 @@
                                 </form>
                                 <button type="button" 
                                         data-share-title="{{ $property->title }}"
-                                        data-share-rent="{{ number_format($property->rent) }}"
+                                        data-share-price="{{ $property->displayPrice() }}"
+                                        data-share-purpose="{{ $property->purpose ?? 'rent' }}"
                                         data-share-deposit="{{ $property->deposit ? number_format($property->deposit) : '' }}"
                                         data-share-city="{{ $property->city }}"
                                         data-share-link="{{ route('rooms.show', $property) }}"
@@ -126,8 +132,8 @@
                                     <i class="fa-brands fa-whatsapp text-emerald-600"></i> Share
                                 </button>
                                 @if($property->status === 'active')
-                                    <button type="button" onclick="markRoomRented({{ $property->id }})" class="owner-room-btn owner-room-btn-rose owner-room-btn-full">
-                                        <i class="fas fa-key"></i> Mark as Rented
+                                    <button type="button" onclick="markRoomRented({{ $property->id }}, '{{ $property->isForSell() ? 'sold' : 'rented' }}')" class="owner-room-btn owner-room-btn-rose owner-room-btn-full">
+                                        <i class="fas fa-key"></i> Mark as {{ $property->isForSell() ? 'Sold' : 'Rented' }}
                                     </button>
                                 @elseif($property->status === 'booked')
                                     <button type="button" onclick="makeRoomAvailable({{ $property->id }})" class="owner-room-btn owner-room-btn-green owner-room-btn-full">
@@ -143,7 +149,7 @@
             <div class="agent-empty-state">
                 <i class="fas fa-house-circle-xmark"></i>
                 <h2>No properties listed yet</h2>
-                <p>Add your first property and start receiving enquiries from tenants.</p>
+                <p>Add your first property and start receiving enquiries from clients.</p>
                 <a href="{{ route('agent.rooms.create') }}" class="agent-empty-btn">
                     <i class="fas fa-plus"></i> Add Your First Property
                 </a>
@@ -165,11 +171,25 @@ async function agentRoomPost(url, payload = {}) {
     if (!response.ok) throw new Error(data.message || 'Request failed');
     return data;
 }
-async function markRoomRented(roomId) {
-    const result = await Swal.fire({ title: 'Mark property as rented?', text: 'This property will stop appearing to property seekers.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, mark rented', confirmButtonColor: '#e11d48' });
+async function markRoomRented(roomId, actionType = 'rented') {
+    const isSold = (actionType === 'sold');
+    const label = isSold ? 'sold' : 'rented';
+    const result = await Swal.fire({ 
+        title: `Mark property as ${label}?`, 
+        text: 'This property will stop appearing to property seekers.', 
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonText: `Yes, mark ${label}`, 
+        confirmButtonColor: '#e11d48' 
+    });
     if (!result.isConfirmed) return;
-    try { const data = await agentRoomPost(`{{ route('agent.rooms.markBooked', ':room') }}`.replace(':room', roomId)); await Swal.fire('Property rented', data.message, 'success'); location.reload(); }
-    catch (error) { Swal.fire('Could not update property', error.message, 'error'); }
+    try { 
+        const data = await agentRoomPost(`{{ route('agent.rooms.markBooked', ':room') }}`.replace(':room', roomId)); 
+        await Swal.fire(`Property marked as ${label}`, data.message, 'success'); 
+        location.reload(); 
+    } catch (error) { 
+        Swal.fire('Could not update property', error.message, 'error'); 
+    }
 }
 async function makeRoomAvailable(roomId) {
     const confirmation = await Swal.fire({
@@ -202,18 +222,21 @@ async function makeRoomAvailable(roomId) {
 }
 function shareBrochureFromBtn(btn) {
     if (!btn) return;
-    var title = btn.getAttribute('data-share-title') || 'Rental Property';
-    var rent = btn.getAttribute('data-share-rent') || '0';
+    var title = btn.getAttribute('data-share-title') || 'Property';
+    var price = btn.getAttribute('data-share-price') || '0';
+    var purpose = btn.getAttribute('data-share-purpose') || 'rent';
     var deposit = btn.getAttribute('data-share-deposit') || '';
     var city = btn.getAttribute('data-share-city') || '';
     var link = btn.getAttribute('data-share-link') || window.location.href;
-    sharePropertyBrochure(title, rent, deposit, city, link);
+    sharePropertyBrochure(title, price, deposit, city, link, purpose);
 }
 
-function sharePropertyBrochure(title, rent, deposit, city, link) {
+function sharePropertyBrochure(title, price, deposit, city, link, purpose) {
     var agency = @json(Auth::user()->agency_name ?: Auth::user()->name);
-    var text = "🏠 *" + title + "*\n" +
-               "💰 *Rent:* ₹" + rent + "/month" + (deposit ? " | *Deposit:* ₹" + deposit : "") + "\n" +
+    var isSell = (purpose === 'sell');
+    var priceLine = isSell ? ("💰 *Sale Price:* " + price + "\n") : ("💰 *Rent:* " + price + (deposit ? " | *Deposit:* ₹" + deposit : "") + "\n");
+    var text = "🏠 *" + title + "* (" + (isSell ? 'For Sale' : 'For Rent') + ")\n" +
+               priceLine +
                (city ? "📍 *Location:* " + city + "\n" : "") +
                "✨ *Managed by:* " + agency + " (Verified Agent)\n\n" +
                "📸 *Photos, Video & Complete Details:* \n" + link + "\n\n" +

@@ -43,6 +43,20 @@ class SitemapController extends Controller
             'priority' => '0.9'
         ];
 
+        $urls[] = [
+            'loc' => $publicUrl('buy'),
+            'lastmod' => now()->toAtomString(),
+            'changefreq' => 'daily',
+            'priority' => '0.9'
+        ];
+
+        $urls[] = [
+            'loc' => $publicUrl('rent'),
+            'lastmod' => now()->toAtomString(),
+            'changefreq' => 'daily',
+            'priority' => '0.9'
+        ];
+
         foreach (City::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['slug', 'updated_at']) as $city) {
             $urls[] = [
                 'loc' => $publicUrl($city->slug),

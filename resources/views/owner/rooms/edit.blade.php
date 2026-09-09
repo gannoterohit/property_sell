@@ -96,24 +96,250 @@
                                     </select>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2 ml-1">Purpose</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? 'rent') !== 'sell' ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
+                                            <input type="radio" name="purpose" value="rent" class="edit-purpose-radio sr-only" {{ ($room->purpose ?? 'rent') !== 'sell' ? 'checked' : '' }}>
+                                            <i class="fas fa-key text-indigo-600"></i>
+                                            <span>For Rent</span>
+                                        </label>
+                                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? '') === 'sell' ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
+                                            <input type="radio" name="purpose" value="sell" class="edit-purpose-radio sr-only" {{ ($room->purpose ?? '') === 'sell' ? 'checked' : '' }}>
+                                            <i class="fas fa-tags text-emerald-600"></i>
+                                            <span>For Sale</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- RENT PRICING FIELDS --}}
+                                <div id="editRentSection" class="{{ ($room->purpose ?? 'rent') === 'sell' ? 'hidden' : '' }} space-y-4 p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100">
+                                    <div class="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fas fa-indian-rupee-sign"></i> Rental Terms
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Monthly Rent (₹)</label>
+                                            <input type="number" name="rent" min="0" value="{{ $room->rent }}" placeholder="e.g. 15000"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-bold text-indigo-700">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Deposit (₹)</label>
+                                            <input type="number" name="deposit" min="0" value="{{ $room->deposit }}" placeholder="e.g. 30000"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Maintenance (₹/mo)</label>
+                                            <input type="number" name="maintenance_charges" min="0" value="{{ $room->feature('maintenance_charges', $room->maintenance) }}" placeholder="e.g. 1500"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Maintenance Type</label>
+                                            <select name="maintenance_type" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                                <option value="extra" {{ $room->feature('maintenance_type') === 'extra' ? 'selected' : '' }}>Extra Charges</option>
+                                                <option value="included" {{ $room->feature('maintenance_type') === 'included' ? 'selected' : '' }}>Included in Rent</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Lock-in Period (Mos)</label>
+                                            <input type="number" name="lockin_period_months" min="0" value="{{ $room->feature('lockin_period_months') }}" placeholder="e.g. 6"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Notice Period (Days)</label>
+                                            <input type="number" name="notice_period_days" min="0" value="{{ $room->feature('notice_period_days') }}" placeholder="e.g. 30"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- SELL PRICING FIELDS --}}
+                                <div id="editSellSection" class="{{ ($room->purpose ?? 'rent') === 'sell' ? '' : 'hidden' }} space-y-4 p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100">
+                                    <div class="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fas fa-hand-holding-dollar"></i> Sale Pricing & Legal Details
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Sale Price (₹) *</label>
+                                            <input type="number" name="price" min="0" value="{{ $room->price }}" placeholder="e.g. 4500000"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-bold text-emerald-700">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Price Negotiable?</label>
+                                            <select name="price_negotiable" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="1" {{ $room->feature('price_negotiable', 1) ? 'selected' : '' }}>Yes (Negotiable)</option>
+                                                <option value="0" {{ !$room->feature('price_negotiable', 1) ? 'selected' : '' }}>Fixed Price</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Possession Status</label>
+                                            <select name="possession_status" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="ready_to_move" {{ $room->possession_status === 'ready_to_move' ? 'selected' : '' }}>Ready to Move</option>
+                                                <option value="under_construction" {{ $room->possession_status === 'under_construction' ? 'selected' : '' }}>Under Construction</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Possession Date</label>
+                                            <input type="text" name="possession_date" value="{{ $room->feature('possession_date') }}" placeholder="e.g. Immediate / Dec 2026"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Property Age</label>
+                                            <select name="property_age" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="Brand New" {{ $room->feature('property_age') === 'Brand New' ? 'selected' : '' }}>Brand New</option>
+                                                <option value="0-1 Year" {{ $room->feature('property_age') === '0-1 Year' ? 'selected' : '' }}>0-1 Year</option>
+                                                <option value="1-5 Years" {{ $room->feature('property_age') === '1-5 Years' ? 'selected' : '' }}>1-5 Years</option>
+                                                <option value="5-10 Years" {{ $room->feature('property_age') === '5-10 Years' ? 'selected' : '' }}>5-10 Years</option>
+                                                <option value="10+ Years" {{ $room->feature('property_age') === '10+ Years' ? 'selected' : '' }}>10+ Years</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Ownership Type</label>
+                                            <select name="ownership_type" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="Freehold" {{ ($room->feature('ownership_type') ?: $room->ownership_type) === 'Freehold' ? 'selected' : '' }}>Freehold</option>
+                                                <option value="Leasehold" {{ ($room->feature('ownership_type') ?: $room->ownership_type) === 'Leasehold' ? 'selected' : '' }}>Leasehold</option>
+                                                <option value="Co-operative" {{ ($room->feature('ownership_type') ?: $room->ownership_type) === 'Co-operative' ? 'selected' : '' }}>Co-operative Society</option>
+                                                <option value="Power of Attorney" {{ ($room->feature('ownership_type') ?: $room->ownership_type) === 'Power of Attorney' ? 'selected' : '' }}>Power of Attorney</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">RERA Registered ID</label>
+                                            <input type="text" name="rera_id" value="{{ $room->feature('rera_id') }}" placeholder="e.g. P52100012345"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-mono">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Bank Loan Approved?</label>
+                                            <select name="is_bank_loan_approved" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="1" {{ $room->feature('is_bank_loan_approved', 1) ? 'selected' : '' }}>Yes (Available)</option>
+                                                <option value="0" {{ !$room->feature('is_bank_loan_approved', 1) ? 'selected' : '' }}>No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- DIMENSIONS & AREA --}}
+                                <div class="grid grid-cols-3 gap-3">
                                     <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Rent (₹/mo)</label>
-                                        <input type="number" name="rent" required min="0" value="{{ $room->rent }}"
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Built-up Area (sqft)</label>
+                                        <input type="number" name="area_sqft" min="0" step="0.01" value="{{ $room->area_sqft }}"
                                                class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Deposit (₹)</label>
-                                        <input type="number" name="deposit" min="0" value="{{ $room->deposit }}"
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Carpet Area (sqft)</label>
+                                        <input type="number" name="carpet_area" min="0" value="{{ $room->feature('carpet_area') }}" placeholder="e.g. 750"
+                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Super Builtup (sqft)</label>
+                                        <input type="number" name="super_builtup_area" min="0" value="{{ $room->feature('super_builtup_area') }}" placeholder="e.g. 1000"
                                                class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Area (sq ft)</label>
-                                    <input type="number" name="area_sqft" min="0" step="0.01" value="{{ $room->area_sqft }}"
-                                           class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                {{-- STRUCTURE & FLOOR DETAILS --}}
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Bathrooms</label>
+                                        <input type="number" name="bathrooms" min="0" max="20" value="{{ $room->feature('bathrooms', $room->bathrooms) }}" placeholder="e.g. 2"
+                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Balconies</label>
+                                        <input type="number" name="balconies" min="0" max="10" value="{{ $room->feature('balconies', $room->balconies) }}" placeholder="e.g. 1"
+                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Floor No</label>
+                                        <input type="number" name="floor_no" min="-2" max="150" value="{{ $room->feature('floor_no', $room->floor) }}" placeholder="e.g. 3"
+                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Total Floors</label>
+                                        <input type="number" name="total_floors" min="0" max="150" value="{{ $room->feature('total_floors', $room->total_floors) }}" placeholder="e.g. 10"
+                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    </div>
                                 </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Facing / Vastu</label>
+                                        <select name="facing" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                            <option value="">Select Facing</option>
+                                            @foreach(['East', 'North', 'North-East', 'West', 'South', 'North-West', 'South-East', 'South-West'] as $face)
+                                                <option value="{{ $face }}" {{ $room->feature('facing') === $face ? 'selected' : '' }}>{{ $face }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Parking Type</label>
+                                        <select name="parking_type" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                            <option value="">Select Parking</option>
+                                            @foreach(['Covered Car + Bike', 'Open Car Parking', 'Bike Only', 'No Parking'] as $park)
+                                                <option value="{{ $park }}" {{ $room->feature('parking_type') === $park ? 'selected' : '' }}>{{ $park }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {{-- COMMERCIAL SPECIFIC ATTRIBUTES --}}
+                                <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4">
+                                    <div class="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fas fa-briefcase"></i> Commercial & Shop Features
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Road Frontage (Ft)</label>
+                                            <input type="number" name="frontage_width_ft" min="0" value="{{ $room->feature('frontage_width_ft') }}" placeholder="e.g. 20"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-amber-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Main Road Facing?</label>
+                                            <select name="is_main_road_facing" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-amber-500 transition text-sm font-medium">
+                                                <option value="1" {{ $room->feature('is_main_road_facing') ? 'selected' : '' }}>Yes</option>
+                                                <option value="0" {{ !$room->feature('is_main_road_facing') ? 'selected' : '' }}>No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Corner Property?</label>
+                                            <select name="is_corner_property" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-amber-500 transition text-sm font-medium">
+                                                <option value="0" {{ !$room->feature('is_corner_property') ? 'selected' : '' }}>No</option>
+                                                <option value="1" {{ $room->feature('is_corner_property') ? 'selected' : '' }}>Yes (2 Sides Open)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Washroom Type</label>
+                                            <select name="washroom_type" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-amber-500 transition text-sm font-medium">
+                                                <option value="Private Washroom" {{ $room->feature('washroom_type') === 'Private Washroom' ? 'selected' : '' }}>Private Washroom</option>
+                                                <option value="Shared Washroom" {{ $room->feature('washroom_type') === 'Shared Washroom' ? 'selected' : '' }}>Shared Complex Washroom</option>
+                                                <option value="No Washroom" {{ $room->feature('washroom_type') === 'No Washroom' ? 'selected' : '' }}>None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                document.querySelectorAll('.edit-purpose-radio').forEach(function(r){
+                                    r.addEventListener('change', function(){
+                                        var isSell = (this.value === 'sell');
+                                        var rentSec = document.getElementById('editRentSection');
+                                        var sellSec = document.getElementById('editSellSection');
+                                        if (rentSec) rentSec.classList.toggle('hidden', isSell);
+                                        if (sellSec) sellSec.classList.toggle('hidden', !isSell);
+                                    });
+                                });
+                                </script>
 
                                 <div>
                                     <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Preferred Tenant</label>

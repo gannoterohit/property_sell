@@ -162,6 +162,11 @@
                                  onerror="this.src='{{ asset('assets/images/default-room.svg') }}'">
                             
                             <div class="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+                                @if($room->isForSell())
+                                    <span class="px-2.5 py-1 rounded-md bg-purple-600 text-white font-black text-[10px] uppercase tracking-wider shadow-sm">
+                                        For Sale
+                                    </span>
+                                @endif
                                 @if($room->is_featured)
                                     <span class="px-2.5 py-1 rounded-md bg-amber-500 text-white font-black text-[10px] uppercase tracking-wider shadow-sm">
                                         <i class="fas fa-star text-[9px] mr-1"></i>Featured
@@ -173,8 +178,12 @@
                             </div>
 
                             <div class="absolute bottom-3 right-3 px-3 py-1 rounded-lg bg-slate-900/85 backdrop-blur-md text-white shadow-md">
-                                <span class="text-base font-black">₹{{ number_format($room->rent) }}</span>
-                                <span class="text-[11px] text-slate-300">/mo</span>
+                                @if($room->isForSell())
+                                    <span class="text-base font-black text-purple-300">{{ $room->displayPrice() }}</span>
+                                @else
+                                    <span class="text-base font-black">₹{{ number_format($room->rent) }}</span>
+                                    <span class="text-[11px] text-slate-300">/mo</span>
+                                @endif
                             </div>
                         </div>
 

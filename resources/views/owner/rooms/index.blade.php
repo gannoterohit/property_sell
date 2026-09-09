@@ -32,11 +32,19 @@
                             <div class="p-5">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0"><h2 class="truncate font-bold text-slate-950">{{ $room->title }}</h2><p class="mt-1 truncate text-xs text-slate-500"><i class="fas fa-location-dot mr-1 text-rose-400"></i>{{ $room->city }}{{ $room->state ? ', '.$room->state : '' }}</p></div>
-                                    <p class="shrink-0 text-sm font-extrabold text-slate-950">&#8377;{{ number_format($room->rent) }}<span class="block text-right text-[10px] font-medium text-slate-400">per month</span></p>
+                                    @if($room->isForSell())
+                                        <p class="shrink-0 text-sm font-extrabold text-purple-700"><i class="fas fa-tag text-xs mr-0.5"></i>{{ $room->displayPrice() }}<span class="block text-right text-[10px] font-medium text-slate-400">sale price</span></p>
+                                    @else
+                                        <p class="shrink-0 text-sm font-extrabold text-slate-950">&#8377;{{ number_format($room->rent) }}<span class="block text-right text-[10px] font-medium text-slate-400">per month</span></p>
+                                    @endif
                                 </div>
                                 <div class="mt-5 grid grid-cols-2 gap-3"><a href="{{ route('owner.rooms.show', $room) }}" class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"><i class="fas fa-eye"></i>View</a><a href="{{ route('owner.rooms.edit', $room) }}" class="flex items-center justify-center gap-2 rounded-xl bg-indigo-50 py-2.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100"><i class="fas fa-pen"></i>Edit</a></div>
                                 @if($room->status === 'active')
-                                    <button type="button" onclick="markRoomRented({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100"><i class="fas fa-key"></i>Mark as Rented</button>
+                                    @if($room->isForSell())
+                                        <button type="button" onclick="markRoomRented({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-50 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-100"><i class="fas fa-tag"></i>Mark as Sold</button>
+                                    @else
+                                        <button type="button" onclick="markRoomRented({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100"><i class="fas fa-key"></i>Mark as Rented</button>
+                                    @endif
                                 @elseif($room->status === 'booked')
                                     <button type="button" onclick="makeRoomAvailable({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"><i class="fas fa-rotate"></i>Make Available</button>
                                 @endif

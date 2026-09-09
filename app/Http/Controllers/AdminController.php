@@ -43,6 +43,8 @@ class AdminController extends Controller
             $data = array_merge($data, [
                 'rooms' => Room::where('listing_fee_paid', true)->count(),
                 'activeRooms' => Room::where('status', 'active')->where('listing_fee_paid', true)->count(),
+                'activeRentRooms' => Room::where('status', 'active')->where('purpose', 'rent')->count(),
+                'activeSellRooms' => Room::where('status', 'active')->where('purpose', 'sell')->count(),
                 'approvedRooms' => Room::where('listing_status', 'approved')->count(),
                 'pendingRooms' => $pendingRooms,
                 'rejectedRooms' => Room::where('listing_status', 'rejected')->count(),
@@ -272,6 +274,9 @@ class AdminController extends Controller
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+        if ($request->filled('purpose') && in_array($request->purpose, ['rent', 'sell'], true)) {
+            $query->where('purpose', $request->purpose);
         }
         if ($request->filled('city')) {
             $query->where('city', $request->city);
@@ -972,7 +977,11 @@ class AdminController extends Controller
                 'integer',
                 Rule::exists('property_categories', 'id')->where(fn ($query) => $query->where('status', true)->where('property_type_id', $request->property_type_id)),
             ],
-            'rent' => 'required|numeric|min:0',
+            'purpose' => 'nullable|in:rent,sell',
+            'rent' => 'required_if:purpose,rent|nullable|numeric|min:0',
+            'price' => 'required_if:purpose,sell|nullable|numeric|min:0',
+            'possession_status' => 'nullable|in:ready_to_move,under_construction',
+            'ownership_type' => 'nullable|string|max:100',
             'deposit' => 'nullable|numeric|min:0',
             'area_sqft' => 'nullable|numeric|min:0',
             'city' => 'required|string',
@@ -982,7 +991,7 @@ class AdminController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'furnishing_type' => ['required', Rule::in(RoomOption::validIdsFor('furnishing_type'))],
-            'tenant_type' => ['required', Rule::in(RoomOption::validIdsFor('tenant_type'))],
+            'tenant_type' => ['nullable', Rule::in(RoomOption::validIdsFor('tenant_type'))],
             'amenities' => 'nullable|array',
             'amenities.*' => ['string', Rule::in(RoomOption::activeLabelsFor('amenity')->all())],
             'landmarks' => 'nullable|array',
@@ -1005,6 +1014,10 @@ class AdminController extends Controller
         $data['listing_type'] = $data['listing_type'] ?? 'owner';
         $data['broker_fee'] = $data['listing_type'] === 'broker' ? ($data['broker_fee'] ?? 0) : 0;
         $data['status'] = 'active';
+        $data['purpose'] = $data['purpose'] ?? 'rent';
+        if ($data['purpose'] === 'sell') {
+            $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? 0);
+        }
 
         // Convert empty latitude/longitude strings to null
         if (isset($data['latitude']) && $data['latitude'] === '') {
@@ -1074,7 +1087,11 @@ class AdminController extends Controller
                 'integer',
                 Rule::exists('property_categories', 'id')->where(fn ($query) => $query->where('status', true)->where('property_type_id', $request->property_type_id)),
             ],
-            'rent' => 'required|numeric|min:0',
+            'purpose' => 'nullable|in:rent,sell',
+            'rent' => 'required_if:purpose,rent|nullable|numeric|min:0',
+            'price' => 'required_if:purpose,sell|nullable|numeric|min:0',
+            'possession_status' => 'nullable|in:ready_to_move,under_construction',
+            'ownership_type' => 'nullable|string|max:100',
             'deposit' => 'nullable|numeric|min:0',
             'area_sqft' => 'nullable|numeric|min:0',
             'city' => 'required|string',
@@ -1084,7 +1101,7 @@ class AdminController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'furnishing_type' => ['required', Rule::in(RoomOption::validIdsFor('furnishing_type'))],
-            'tenant_type' => ['required', Rule::in(RoomOption::validIdsFor('tenant_type'))],
+            'tenant_type' => ['nullable', Rule::in(RoomOption::validIdsFor('tenant_type'))],
             'amenities' => 'nullable|array',
             'amenities.*' => ['string', Rule::in(RoomOption::activeLabelsFor('amenity')->all())],
             'landmarks' => 'nullable|array',
@@ -1109,6 +1126,10 @@ class AdminController extends Controller
         $data['listing_fee_paid'] = $request->has('listing_fee_paid');
         $data['listing_status'] = $request->listing_status ?? $room->listing_status;
         $data['status'] = $request->status ?? $room->status;
+        $resolvedPurpose = $data['purpose'] ?? $room->purpose ?? 'rent';
+        if ($resolvedPurpose === 'sell') {
+            $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? $room->rent ?? 0);
+        }
 
         // Convert empty latitude/longitude strings to null
         if (isset($data['latitude']) && $data['latitude'] === '') {

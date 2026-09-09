@@ -278,7 +278,9 @@
                                         if(strlen($seekerDigits) === 10) { $seekerDigits = '91' . $seekerDigits; }
                                         elseif(strlen($seekerDigits) === 11 && str_starts_with($seekerDigits, '0')) { $seekerDigits = '91' . substr($seekerDigits, 1); }
                                         $roomUrl = route('rooms.show', $room);
-                                        $waMsg = "Hello " . ($seeker->name ?? 'Sir/Madam') . "! 👋\n\nAapne hamari property me interest show kiya tha:\n🏠 *" . ($room->title ?? 'Rental Property') . "*\n📍 *" . ($room->city ?? '') . "*\n💰 Rent: ₹" . number_format($room->rent ?? 0) . "/month\n\nIs property ki complete photos & details yahan dekhein:\n" . $roomUrl . "\n\nAap kab visit karna chahenge? Please batayein.";
+                                        $priceLine = $room->isForSell() ? "💰 Price: " . $room->displayPrice() : "💰 Rent: ₹" . number_format($room->rent ?? 0) . "/month";
+                                        $propType = $room->isForSell() ? 'Property for Sale' : 'Rental Property';
+                                        $waMsg = "Hello " . ($seeker->name ?? 'Sir/Madam') . "! 👋\n\nAapne hamari property me interest show kiya tha:\n🏠 *" . ($room->title ?? $propType) . "*\n📍 *" . ($room->city ?? '') . "*\n" . $priceLine . "\n\nIs property ki complete photos & details yahan dekhein:\n" . $roomUrl . "\n\nAap kab visit karna chahenge? Please batayein.";
                                     @endphp
                                     <a href="tel:{{ $seeker->phone }}" class="owner-room-btn owner-room-btn-indigo" title="Call Seeker">
                                         <i class="fas fa-phone-alt"></i> Call

@@ -31,7 +31,7 @@ class OtpController extends Controller
         $mode = $this->otpMode();
 
         // Normalise: web sends 'identifier' (email or phone) OR 'email'
-        $rawIdentifier = $request->input('identifier') ?? $request->input('email');
+        $rawIdentifier = trim($request->input('identifier') ?? $request->input('email') ?? '');
 
         if (empty($rawIdentifier)) {
             return response()->json(['success' => false, 'message' => 'Please enter your email or mobile number.'], 422);
@@ -44,8 +44,9 @@ class OtpController extends Controller
             return response()->json(['success' => false, 'message' => 'Enter a valid email address or 10-digit mobile number.'], 422);
         }
 
-        $email = $isEmail ? $rawIdentifier : null;
+        $email = $isEmail ? strtolower(trim($rawIdentifier)) : null;
         $phone = $isPhone ? preg_replace('/[^0-9+]/', '', $rawIdentifier) : null;
+        $context = $request->input('context') ?? $request->input('mode') ?? 'login';
 
         // ── Lookup user ────────────────────────────────────────────────
         $existingUser = null;
@@ -56,6 +57,15 @@ class OtpController extends Controller
                 ->orWhere('phone', '91' . $phone)
                 ->orWhere('phone', '+91' . $phone)
                 ->first();
+        }
+
+        // If user is trying to register but account already exists
+        if ($context === 'register' && $existingUser) {
+            return response()->json([
+                'success' => false,
+                'already_registered' => true,
+                'message' => 'This account is already registered. Please login instead.'
+            ], 422);
         }
 
         if ($existingUser && $existingUser->is_blocked) {
@@ -194,6 +204,23 @@ class OtpController extends Controller
      */
     public function verifyRegistrationOtp(Request $request)
     {
+        if ($request->has('email')) {
+            $request->merge(['email' => strtolower(trim((string)$request->email))]);
+        }
+        if ($request->has('phone')) {
+            $request->merge(['phone' => trim((string)$request->phone)]);
+        }
+
+        $messages = [
+            'email.unique'   => 'This email address is already registered. Please login instead.',
+            'email.required' => 'Please enter your email address.',
+            'email.email'    => 'Please enter a valid email address.',
+            'name.required'  => 'Please enter your full name.',
+            'otp.required'   => 'Please enter the 6-digit verification code.',
+            'otp.min'        => 'Verification code must be 6 digits.',
+            'otp.max'        => 'Verification code must be 6 digits.',
+        ];
+
         $validator = Validator::make($request->all(), [
             'name'            => 'required|string|max:255',
             'email'           => 'required|email|unique:users,email',
@@ -204,23 +231,26 @@ class OtpController extends Controller
             'agency_address'  => 'nullable|string|max:500',
             'broker_license'  => 'nullable|string|max:100',
             'agency_gst'      => 'nullable|string|max:50',
-        ]);
+        ], $messages);
 
         if ($validator->fails()) {
+            $firstError = $validator->errors()->first();
+            $alreadyRegistered = $validator->errors()->has('email') && str_contains(strtolower($firstError), 'already registered');
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid input',
+                'already_registered' => $alreadyRegistered,
+                'message' => $firstError ?: 'Please check your information.',
                 'errors'  => $validator->errors()
             ], 422);
         }
 
-        $email = $request->email;
-        $otp   = $request->otp;
+        $email = strtolower(trim((string)$request->email));
+        $otp   = preg_replace('/\D/', '', (string) $request->otp);
 
         if (!Otp::verify($email, $otp)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid or expired OTP'
+                'message' => 'The verification code you entered is invalid or has expired. Please check or click Resend code.'
             ], 401);
         }
 

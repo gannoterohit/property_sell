@@ -45,6 +45,18 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::get('/buy', function () {
+    return redirect()->route('rooms.index', ['purpose' => 'sell']);
+})->name('rooms.buy');
+Route::get('/rent', function () {
+    return redirect()->route('rooms.index', ['purpose' => 'rent']);
+})->name('rooms.rent');
+Route::get('/properties-for-sale', function () {
+    return redirect()->route('rooms.index', ['purpose' => 'sell']);
+});
+Route::get('/properties-for-rent', function () {
+    return redirect()->route('rooms.index', ['purpose' => 'rent']);
+});
 Route::get('/rooms/compare', [RoomController::class, 'compare'])->name('rooms.compare');
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/map-search', [MapSearchController::class, 'index'])->name('rooms.map');

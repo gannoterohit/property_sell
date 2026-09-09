@@ -1,10 +1,10 @@
 @extends('layouts.public')
 
-@section('title', ($room->title ?? 'Room') . ' in ' . $room->city . ' | ' . \App\Models\Setting::get('website_name', 'RoomRental'))
-@section('description', 'Looking for ' . ($room->title ?? 'a property') . ' in ' . $room->city . ($room->landmarks ? ' near ' . implode(', ', $room->landmarks) : '') . '? Rent starts at ₹' . number_format($room->rent) . '. Verified listings with photos, facilities, and owner contact.')
-@section('keywords', 'pg in ' . $room->city . ', room on rent in ' . $room->city . ', paying guest for ' . $room->tenantTypeLabel() . ' in ' . $room->city . ', ' . ($room->roomTypeLabel() !== 'N/A' ? $room->roomTypeLabel() : 'room') . ' in ' . $room->city . ($room->landmarks ? ', ' . implode(', ', $room->landmarks) : ''))
-@section('og_title', ($room->title ?? 'Room') . ' in ' . $room->city . ' - ₹' . number_format($room->rent))
-@section('og_description', Str::limit(($room->description ?? 'Find your perfect room in ' . $room->city) . ($room->landmarks ? '. Nearby: ' . implode(', ', $room->landmarks) : ''), 155))
+@section('title', ($room->title ?? 'Property') . ' in ' . $room->city . ' | ' . \App\Models\Setting::get('website_name', 'ApnaNest'))
+@section('description', 'Looking for ' . ($room->title ?? 'a property') . ' in ' . $room->city . ($room->landmarks ? ' near ' . implode(', ', $room->landmarks) : '') . '? ' . ($room->isForSell() ? 'Sale price ' . $room->displayPrice() . '. Verified property with photos and seller contact.' : 'Rent starts at ₹' . number_format($room->rent) . '. Verified listings with photos, facilities, and owner contact.'))
+@section('keywords', ($room->isForSell() ? 'property for sale in ' : 'pg in ') . $room->city . ', ' . ($room->isForSell() ? 'flat for sale ' : 'room on rent in ') . $room->city . ', ' . ($room->roomTypeLabel() !== 'N/A' ? $room->roomTypeLabel() : 'property') . ' in ' . $room->city . ($room->landmarks ? ', ' . implode(', ', $room->landmarks) : ''))
+@section('og_title', ($room->title ?? 'Property') . ' in ' . $room->city . ' - ' . $room->displayPrice())
+@section('og_description', Str::limit(($room->description ?? ($room->isForSell() ? 'Property for sale in ' : 'Find your perfect room in ') . $room->city) . ($room->landmarks ? '. Nearby: ' . implode(', ', $room->landmarks) : ''), 155))
 @section('og_url', route('rooms.show', $room))
 @section('og_image', $room->photo_url)
 @section('canonical', route('rooms.show', $room))
@@ -27,7 +27,7 @@
         ],
         "offers" => [
             "@type" => "Offer",
-            "price" => (string) ($room->rent ?? '0'),
+            "price" => (string) ($room->isForSell() ? ($room->price ?? 0) : ($room->rent ?? 0)),
             "priceCurrency" => "INR",
             "availability" => ($room->status === 'active') ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         ]
@@ -69,6 +69,16 @@
                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
                             <i class="fas fa-building text-[10px]"></i> {{ $room->roomTypeLabel() }}
                         </span>
+                        {{-- Purpose badge --}}
+                        @if($room->isForSell())
+                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
+                                <i class="fas fa-tag text-[10px]"></i> For Sale
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <i class="fas fa-key text-[10px]"></i> For Rent
+                            </span>
+                        @endif
                         @if($room->is_featured)
                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
                                 <i class="fas fa-star text-amber-500 text-[10px]"></i> Featured
@@ -90,7 +100,7 @@
                         <button type="button" 
                                 data-compare-id="{{ $room->id }}"
                                 data-compare-title="{{ $room->title }}"
-                                data-compare-rent="{{ (float)$room->rent }}"
+                                data-compare-rent="{{ $room->isForSell() ? (float)$room->price : (float)$room->rent }}"
                                 data-compare-image="{{ $room->photo_url ?: asset('assets/images/default-room.svg') }}"
                                 data-compare-url="{{ route('rooms.show', $room->slug ?: $room->id) }}"
                                 onclick="handleCompareClick(this, event)"
@@ -211,28 +221,46 @@
                     <div class="p-4 sm:p-5 border-t border-slate-100 bg-white">
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {{-- 1. Monthly Rent --}}
-                            <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
+                        <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
                                 <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 text-sm font-black shadow-xs">
                                     <i class="fas fa-indian-rupee-sign"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Monthly Rent</div>
-                                    <div class="text-lg font-black text-slate-900 leading-snug">
-                                        ₹{{ number_format($room->rent) }}<span class="text-[11px] font-medium text-slate-400">/mo</span>
-                                    </div>
+                                    @if($room->isForSell())
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sale Price</div>
+                                        <div class="text-lg font-black text-slate-900 leading-snug">
+                                            {{ $room->displayPrice() }}
+                                        </div>
+                                    @else
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Monthly Rent</div>
+                                        <div class="text-lg font-black text-slate-900 leading-snug">
+                                            ₹{{ number_format($room->rent) }}<span class="text-[11px] font-medium text-slate-400">/mo</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
-                            {{-- 2. Security Deposit --}}
+                            {{-- 2. Deposit (Rent) / Possession Status (Sell) --}}
                             <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
                                 <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 text-sm font-black shadow-xs">
-                                    <i class="fas fa-shield-halved"></i>
+                                    @if($room->isForSell())
+                                        <i class="fas fa-home"></i>
+                                    @else
+                                        <i class="fas fa-shield-halved"></i>
+                                    @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Deposit</div>
-                                    <div class="text-base font-extrabold text-slate-900 leading-snug">
-                                        {{ $room->deposit ? '₹' . number_format($room->deposit) : 'Nil / Negotiable' }}
-                                    </div>
+                                    @if($room->isForSell())
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Possession</div>
+                                        <div class="text-base font-extrabold text-slate-900 leading-snug">
+                                            {{ $room->possessionLabel() }}
+                                        </div>
+                                    @else
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Deposit</div>
+                                        <div class="text-base font-extrabold text-slate-900 leading-snug">
+                                            {{ $room->deposit ? '₹' . number_format($room->deposit) : 'Nil / Negotiable' }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -290,6 +318,223 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {{-- PROPERTY OVERVIEW & KEY SPECIFICATIONS --}}
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 mb-4">
+                    <h2 class="text-base font-extrabold text-slate-900 mb-4 flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                                <i class="fas fa-list-check"></i>
+                            </span>
+                            Property Overview & Specifications
+                        </span>
+                        @if($room->isForSell() && $room->ratePerSqft())
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-black border border-emerald-200">
+                                ₹{{ number_format($room->ratePerSqft()) }} / sq.ft
+                            </span>
+                        @endif
+                    </h2>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs">
+                        {{-- Carpet & Super Built-up Area --}}
+                        @if($room->feature('carpet_area'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Carpet Area</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ number_format($room->feature('carpet_area')) }} sqft</span>
+                            </div>
+                        @endif
+
+                        @if($room->feature('super_builtup_area'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Super Built-up</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ number_format($room->feature('super_builtup_area')) }} sqft</span>
+                            </div>
+                        @endif
+
+                        @if($room->feature('plot_area'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Plot Dimensions</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('plot_area') }} {{ strtoupper($room->feature('plot_area_unit', 'sqft')) }}</span>
+                            </div>
+                        @endif
+
+                        {{-- Bathrooms & Balconies --}}
+                        @if($room->feature('bathrooms', $room->bathrooms))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Bathrooms</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('bathrooms', $room->bathrooms) }} Baths</span>
+                            </div>
+                        @endif
+
+                        @if($room->feature('balconies', $room->balconies))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Balconies</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('balconies', $room->balconies) }} Balconies</span>
+                            </div>
+                        @endif
+
+                        {{-- Floor Number / Total Floors --}}
+                        @if($room->feature('floor_no') !== null || $room->feature('total_floors') !== null)
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Floor</span>
+                                <span class="font-extrabold text-slate-900 text-sm">
+                                    {{ $room->feature('floor_no') !== null ? ($room->feature('floor_no') == 0 ? 'Ground' : $room->feature('floor_no') . 'th') : '—' }}
+                                    @if($room->feature('total_floors')) of {{ $room->feature('total_floors') }} Floors @endif
+                                </span>
+                            </div>
+                        @endif
+
+                        {{-- Facing / Vastu --}}
+                        @if($room->feature('facing'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Facing / Vastu</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('facing') }} Facing</span>
+                            </div>
+                        @endif
+
+                        {{-- Parking --}}
+                        @if($room->feature('parking_type'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Parking</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('parking_type') }}</span>
+                            </div>
+                        @endif
+
+                        {{-- Water Supply --}}
+                        @if($room->feature('water_supply'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Water Supply</span>
+                                <span class="font-extrabold text-slate-900 text-sm truncate">{{ $room->feature('water_supply') }}</span>
+                            </div>
+                        @endif
+
+                        {{-- Possession Date / Age --}}
+                        @if($room->isForSell())
+                            @if($room->feature('property_age'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Property Age</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('property_age') }}</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('possession_date'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Possession Time</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('possession_date') }}</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('ownership_type') ?: $room->ownership_type)
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Ownership Title</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('ownership_type') ?: $room->ownership_type }}</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('is_bank_loan_approved'))
+                                <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                                    <span class="text-emerald-600 block font-medium uppercase text-[10px]">Bank Loan</span>
+                                    <span class="font-extrabold text-emerald-900 text-sm">Approved / Available</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('rera_id'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60 col-span-2">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">RERA Registered ID</span>
+                                    <span class="font-extrabold text-slate-900 text-sm font-mono">{{ $room->feature('rera_id') }}</span>
+                                </div>
+                            @endif
+                        @else
+                            {{-- Rent Specific Attributes --}}
+                            @if($room->feature('maintenance_charges'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Maintenance</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">₹{{ number_format($room->feature('maintenance_charges')) }}/mo ({{ $room->feature('maintenance_type', 'extra') }})</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('lockin_period_months'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Lock-in Period</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('lockin_period_months') }} Months</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('notice_period_days'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Notice Period</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('notice_period_days') }} Days</span>
+                                </div>
+                            @endif
+
+                            @if($room->feature('food_preference'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Food Preference</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('food_preference') }}</span>
+                                </div>
+                            @endif
+
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Pet Friendly</span>
+                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('pet_friendly') ? 'Yes (Pets Allowed)' : 'No Pets' }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Commercial Highlights (if applicable) --}}
+                    @if($room->isCommercial() || $room->feature('commercial_type') || $room->feature('is_main_road_facing') || $room->feature('frontage_width_ft'))
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-amber-900 mb-3 flex items-center gap-1.5">
+                                <i class="fas fa-briefcase text-amber-600"></i> Commercial Property Highlights
+                            </h3>
+                            <div class="flex flex-wrap gap-2">
+                                @if($room->feature('commercial_type'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 font-bold text-xs">
+                                        <i class="fas fa-store mr-1 text-amber-600"></i> {{ $room->feature('commercial_type') }}
+                                    </span>
+                                @endif
+                                @if($room->feature('is_main_road_facing'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-200 font-bold text-xs">
+                                        <i class="fas fa-road mr-1 text-indigo-600"></i> Main Road Facing
+                                    </span>
+                                @endif
+                                @if($room->feature('is_corner_property'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold text-xs">
+                                        <i class="fas fa-arrows-up-down-left-right mr-1 text-emerald-600"></i> Corner Property (2 Sides Open)
+                                    </span>
+                                @endif
+                                @if($room->feature('frontage_width_ft'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs">
+                                        Frontage: {{ $room->feature('frontage_width_ft') }} Ft
+                                    </span>
+                                @endif
+                                @if($room->feature('washroom_type'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs">
+                                        {{ $room->feature('washroom_type') }}
+                                    </span>
+                                @endif
+                                @if($room->feature('power_backup'))
+                                    <span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs">
+                                        Backup: {{ $room->feature('power_backup') }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if($room->feature('suitable_for') && is_array($room->feature('suitable_for')) && count($room->feature('suitable_for')) > 0)
+                                <div class="mt-3">
+                                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Suitable For:</span>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach($room->feature('suitable_for') as $suit)
+                                            <span class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold">
+                                                {{ $suit }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
 
                 {{-- 1st Ad Slot: Above Description/Facilities --}}
@@ -449,7 +694,11 @@
                                 }
                                 $ownerDisplayName = $room->owner?->name ?: ($room->listing_type === 'broker' ? 'Property Agent' : 'Home Owner');
                                 $siteName = \App\Models\Setting::get('website_name', 'RoomRental');
-                                $waPreMessage = "Hello {$ownerDisplayName} ji! Maine aapka room '{$room->title}' {$siteName} par dekha hai. Kya yeh room abhi available hai? Mujhe visit karni hai: " . route('rooms.show', $room->id);
+                                if ($room->isForSell()) {
+                                    $waPreMessage = "Hello {$ownerDisplayName} ji! Maine aapka property '{$room->title}' {$siteName} par dekha hai. Kya price negotiate ho sakta hai? Mujhe details chahiye: " . route('rooms.show', $room->id);
+                                } else {
+                                    $waPreMessage = "Hello {$ownerDisplayName} ji! Maine aapka room '{$room->title}' {$siteName} par dekha hai. Kya yeh room abhi available hai? Mujhe visit karni hai: " . route('rooms.show', $room->id);
+                                }
                                 $waLink = "https://wa.me/{$waPhone}?text=" . rawurlencode($waPreMessage);
                             @endphp
                             @if($isUnlocked)
@@ -726,7 +975,9 @@ document.addEventListener('DOMContentLoaded', () => {
             id: {{ $room->id }},
             title: @json($room->title),
             slug: @json($room->slug),
-            rent: {{ (float) $room->rent }},
+            rent: {{ (float) ($room->isForSell() ? ($room->price ?? 0) : ($room->rent ?? 0)) }},
+            display_price: @json($room->displayPrice()),
+            is_sell: {{ $room->isForSell() ? 'true' : 'false' }},
             city: @json($room->city),
             image: @json($room->photo_url ?: asset('assets/images/default-room.svg')),
             room_type: @json($room->roomTypeOption?->label ?? 'Room'),
@@ -747,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
         content_ids: [@json((string) $room->id)],
         content_name: @json($room->title),
         city: @json($room->city),
-        value: {{ (float) $room->rent }},
+        value: {{ (float) ($room->isForSell() ? ($room->price ?? 0) : ($room->rent ?? 0)) }},
         currency: 'INR'
     });
 });

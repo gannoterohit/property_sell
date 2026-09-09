@@ -19,38 +19,48 @@
 
                                     <!-- Status Badges -->
                                     <div class="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-                                        @if($room->is_featured)
-                                            <span class="bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">Featured</span>
-                                        @endif
-                                        <span class="room-theme-type-badge bg-white/90 backdrop-blur-sm text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-lg border border-white/40 shadow-sm">
-                                            {{ $room->roomTypeLabel() }}
-                                        </span>
-                                        @if($room->propertyType?->name)
-                                            <span class="bg-slate-900 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                                                {{ $room->propertyType->name }}
-                                            </span>
-                                        @endif
-                                        @if($room->propertyCategory?->name)
-                                            <span class="bg-indigo-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                                                {{ $room->propertyCategory->name }}
-                                            </span>
-                                        @endif
-                                        @if($room->listing_type === 'broker')
-                                            <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8.5px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-md">
-                                                <i class="fas fa-building"></i> Verified Agency
-                                            </span>
-                                        @else
-                                            <span class="bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
-                                                <i class="fas fa-shield-check"></i> Direct Owner (0%)
-                                            </span>
-                                        @endif
-                                    </div>
+                                         @if($room->is_featured)
+                                             <span class="bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">Featured</span>
+                                         @endif
+                                         {{-- Purpose Badge: FOR RENT / FOR SALE --}}
+                                         @if($room->isForSell())
+                                             <span class="bg-purple-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                 <i class="fas fa-tag"></i> For Sale
+                                             </span>
+                                         @else
+                                             <span class="bg-emerald-500 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                 <i class="fas fa-key"></i> For Rent
+                                             </span>
+                                         @endif
+                                         <span class="room-theme-type-badge bg-white/90 backdrop-blur-sm text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-lg border border-white/40 shadow-sm">
+                                             {{ $room->roomTypeLabel() }}
+                                         </span>
+                                         @if($room->propertyType?->name)
+                                             <span class="bg-slate-900 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                                                 {{ $room->propertyType->name }}
+                                             </span>
+                                         @endif
+                                         @if($room->propertyCategory?->name)
+                                             <span class="bg-indigo-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                                                 {{ $room->propertyCategory->name }}
+                                             </span>
+                                         @endif
+                                         @if($room->listing_type === 'broker')
+                                             <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8.5px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-md">
+                                                 <i class="fas fa-building"></i> Verified Agency
+                                             </span>
+                                         @else
+                                             <span class="bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+                                                 <i class="fas fa-shield-check"></i> Direct Owner (0%)
+                                             </span>
+                                         @endif
+                                     </div>
 
                                     <!-- Compare button -->
                                     <button type="button" 
                                             data-compare-id="{{ $room->id }}"
                                             data-compare-title="{{ $room->title }}"
-                                            data-compare-rent="{{ (float)$room->rent }}"
+                                            data-compare-rent="{{ $room->isForSell() ? (float)$room->price : (float)$room->rent }}"
                                             data-compare-image="{{ $room->photo_url ?: asset('assets/images/default-room.svg') }}"
                                             data-compare-url="{{ route('rooms.show', $room->slug ?: $room->id) }}"
                                             onclick="handleCompareClick(this, event)"
@@ -69,8 +79,13 @@
                                     <!-- Price tag overlay -->
                                     <div class="absolute bottom-2.5 left-2.5">
                                         <div class="room-price-tag px-3 py-1 rounded-xl">
-                                            <span class="text-sm font-black">₹{{ number_format($room->rent) }}</span>
-                                            <span class="text-[8px] font-bold">/mo</span>
+                                            @if($room->isForSell())
+                                                <span class="text-sm font-black">{{ $room->displayPrice() }}</span>
+                                                <span class="text-[8px] font-bold">sale</span>
+                                            @else
+                                                <span class="text-sm font-black">₹{{ number_format($room->rent) }}</span>
+                                                <span class="text-[8px] font-bold">/mo</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </a>
@@ -95,10 +110,18 @@
                                         <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
                                             <i class="room-theme-primary-icon fas fa-couch"></i> {{ $room->furnishingTypeLabel() }}
                                         </span>
-                                        @if($room->tenantTypeLabel() !== 'N/A')
-                                            <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                <i class="room-theme-primary-icon fas fa-users"></i> {{ $room->tenantTypeLabel() }}
-                                            </span>
+                                        @if($room->isForSell())
+                                            @if($room->possession_status)
+                                                <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                    <i class="room-theme-primary-icon fas fa-home"></i> {{ $room->possessionLabel() }}
+                                                </span>
+                                            @endif
+                                        @else
+                                            @if($room->tenantTypeLabel() !== 'N/A')
+                                                <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                    <i class="room-theme-primary-icon fas fa-users"></i> {{ $room->tenantTypeLabel() }}
+                                                </span>
+                                            @endif
                                         @endif
                                         @if($room->area_sqft)
                                             <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
@@ -137,12 +160,12 @@
                                             </div>
                                         @else
                                             <a href="{{ route('rooms.show', $room->id) }}" class="room-theme-primary-button w-full py-2 font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center gap-1 text-xs mt-auto">
-                                                {{ $room->listing_type === 'broker' ? 'Contact Agent' : 'Contact Owner' }} <i class="fas fa-arrow-right text-[10px]"></i>
+                                                {{ $room->isForSell() ? 'Contact Seller' : ($room->listing_type === 'broker' ? 'Contact Agent' : 'Contact Owner') }} <i class="fas fa-arrow-right text-[10px]"></i>
                                             </a>
                                         @endif
                                     @else
                                         <a href="{{ route('rooms.show', $room->id) }}" class="room-theme-primary-button w-full py-2 font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center gap-1 text-xs mt-auto">
-                                            Contact Owner <i class="fas fa-arrow-right text-[10px]"></i>
+                                            {{ $room->isForSell() ? 'Contact Seller' : 'Contact Owner' }} <i class="fas fa-arrow-right text-[10px]"></i>
                                         </a>
                                     @endauth
                                 </div>

@@ -128,16 +128,23 @@
                         @endif
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h3 class="truncate text-sm font-bold text-slate-900">{{ $room->title }}</h3>
+                        <div class="flex items-center gap-1.5">
+                            <h3 class="truncate text-sm font-bold text-slate-900">{{ $room->title }}</h3>
+                            @if($room->isForSell())
+                                <span class="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-purple-100 text-purple-700">Sell</span>
+                            @endif
+                        </div>
                         <p class="mt-0.5 truncate text-xs text-slate-500">
                             <i class="fas fa-location-dot mr-1 text-slate-400"></i>{{ $room->city }}
                         </p>
                     </div>
                     <div class="text-right flex-shrink-0">
-                        <p class="text-sm font-extrabold text-slate-900">&#8377;{{ number_format($room->rent) }}</p>
+                        <p class="text-sm font-extrabold {{ $room->isForSell() ? 'text-purple-700' : 'text-slate-900' }}">
+                            {{ $room->isForSell() ? $room->displayPrice() : '₹' . number_format($room->rent) }}
+                        </p>
                         <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase mt-1
                             {{ $room->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($room->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600') }}">
-                            {{ $room->status === 'booked' ? 'Rented' : $room->status }}
+                            {{ $room->status === 'booked' ? ($room->isForSell() ? 'Sold' : 'Rented') : $room->status }}
                         </span>
                     </div>
                 </div>

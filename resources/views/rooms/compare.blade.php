@@ -102,9 +102,13 @@
                                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-50"></div>
                                                 
                                                 {{-- Badge --}}
-                                                @if($room->listing_type === 'broker')
+                                                @if($room->isForSell())
                                                     <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-600 text-white shadow-2xs">
-                                                        Verified Broker
+                                                        For Sale
+                                                    </span>
+                                                @elseif($room->listing_type === 'broker')
+                                                    <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-2xs">
+                                                        Broker Verified
                                                     </span>
                                                 @else
                                                     <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
@@ -161,17 +165,24 @@
                             </tr>
 
                             <tr>
-                                <td class="p-4 sm:p-5 font-bold text-slate-500 bg-slate-50/40">Monthly Rent</td>
+                                <td class="p-4 sm:p-5 font-bold text-slate-500 bg-slate-50/40">Price / Rent</td>
                                 @foreach($rooms as $room)
                                     <td class="p-4 sm:p-5 border-l border-slate-200/80">
-                                        <div class="flex items-baseline gap-1.5">
-                                            <span class="text-lg font-black text-slate-900">₹{{ number_format($room->rent) }}</span>
-                                            <span class="text-slate-400 text-[10px]">/month</span>
-                                        </div>
-                                        @if($rooms->count() > 1 && (float)$room->rent === (float)$minRent)
-                                            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-award text-[9px]"></i> Lowest Rent
-                                            </span>
+                                        @if($room->isForSell())
+                                            <div class="flex items-baseline gap-1.5">
+                                                <span class="text-lg font-black text-purple-700">{{ $room->displayPrice() }}</span>
+                                                <span class="text-purple-600 text-[10px] font-bold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">Sale Price</span>
+                                            </div>
+                                        @else
+                                            <div class="flex items-baseline gap-1.5">
+                                                <span class="text-lg font-black text-slate-900">₹{{ number_format($room->rent) }}</span>
+                                                <span class="text-slate-400 text-[10px]">/month</span>
+                                            </div>
+                                            @if($rooms->count() > 1 && (float)$room->rent === (float)$minRent)
+                                                <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <i class="fas fa-award text-[9px]"></i> Lowest Rent
+                                                </span>
+                                            @endif
                                         @endif
                                     </td>
                                 @endforeach
@@ -184,7 +195,11 @@
                                 <td class="p-4 sm:p-5 font-bold text-slate-500 bg-slate-50/40">Security Deposit</td>
                                 @foreach($rooms as $room)
                                     <td class="p-4 sm:p-5 border-l border-slate-200/80 font-bold text-slate-800">
-                                        {{ $room->deposit ? '₹' . number_format($room->deposit) : 'Nil / Negotiable' }}
+                                        @if($room->isForSell())
+                                            <span class="text-slate-400 font-normal">N/A (Property Sale)</span>
+                                        @else
+                                            {{ $room->deposit ? '₹' . number_format($room->deposit) : 'Nil / Negotiable' }}
+                                        @endif
                                     </td>
                                 @endforeach
                                 @for($i = $rooms->count(); $i < 3; $i++)

@@ -16,9 +16,20 @@ use Illuminate\Support\Facades\Http;
 
 class LandingPageController extends Controller
 {
-    public function city(string $citySlug, Request $request)
+    public function city(?Request $request = null, ?string $citySlug = null)
     {
-        $city = City::where('slug', $citySlug)->firstOrFail();
+        $request = $request ?: request();
+
+        // If accessed under XAMPP subfolder or citySlug is empty, show index
+        if (empty($citySlug) || strtolower($citySlug) === 'apnanestsell') {
+            return $this->index($request);
+        }
+
+        $city = City::where('slug', $citySlug)->first();
+        if (!$city) {
+            return $this->index($request);
+        }
+
         session(['user_city' => $city->name]);
         $request->merge(['city' => $city->name]);
 

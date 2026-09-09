@@ -55,6 +55,11 @@ class PropertyCatalogSeeder extends Seeder
                 'slug' => 'warehouse',
                 'categories' => ['Warehouse', 'Godown', 'Industrial Shed'],
             ],
+            [
+                'name' => 'Plot / Land',
+                'slug' => 'plot-land',
+                'categories' => ['Residential Plot', 'Commercial Land', 'Agricultural / Farm Land', 'Industrial Plot'],
+            ],
         ];
 
         foreach ($types as $typeData) {

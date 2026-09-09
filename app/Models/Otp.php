@@ -18,13 +18,14 @@ class Otp extends Model
      */
     public static function generate(string $email): string
     {
-        self::where('email', $email)->delete();
+        $cleanEmail = strtolower(trim($email));
+        self::where('email', $cleanEmail)->orWhere('identifier', $cleanEmail)->delete();
 
         $code = random_int(100000, 999999);
 
         self::create([
-            'email'      => $email,
-            'identifier' => $email,
+            'email'      => $cleanEmail,
+            'identifier' => $cleanEmail,
             'code'       => Hash::make((string) $code),
             'expires_at' => now()->addMinutes(10),
         ]);
@@ -60,8 +61,13 @@ class Otp extends Model
      */
     public static function verify(string $email, string $code): bool
     {
-        return DB::transaction(function () use ($email, $code): bool {
-            $otp = self::where('email', $email)
+        $cleanEmail = strtolower(trim($email));
+        $cleanCode  = trim($code);
+
+        return DB::transaction(function () use ($cleanEmail, $cleanCode): bool {
+            $otp = self::where(function ($q) use ($cleanEmail) {
+                    $q->where('email', $cleanEmail)->orWhere('identifier', $cleanEmail);
+                })
                 ->where('expires_at', '>', now())
                 ->where('used', false)
                 ->latest('id')
@@ -73,8 +79,8 @@ class Otp extends Model
             }
 
             $valid = str_starts_with($otp->code, '$')
-                ? Hash::check($code, $otp->code)
-                : hash_equals((string) $otp->code, $code);
+                ? Hash::check($cleanCode, $otp->code)
+                : hash_equals((string) $otp->code, $cleanCode);
 
             if (!$valid) {
                 return false;

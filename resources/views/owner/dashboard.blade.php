@@ -38,8 +38,23 @@
                                 <div class="owner-recent-placeholder"><i class="fas fa-house"></i></div>
                                  @if($room->photo_url)<img src="{{ $room->photo_url }}" alt="" width="400" height="300" loading="lazy" onerror="this.style.display='none'">@endif
                             </div>
-                            <div class="min-w-0 flex-1"><h3 class="truncate text-sm font-bold text-slate-900">{{ $room->title }}</h3><p class="mt-1 truncate text-xs text-slate-500"><i class="fas fa-location-dot mr-1 text-slate-400"></i>{{ $room->city }}</p><p class="mt-1 text-sm font-extrabold text-slate-900">&#8377;{{ number_format($room->rent) }}<span class="text-xs font-normal text-slate-400">/month</span></p></div>
-                            <span class="hidden sm:inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {{ $room->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($room->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600') }}">{{ $room->status === 'booked' ? 'Rented' : $room->status }}</span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <h3 class="truncate text-sm font-bold text-slate-900">{{ $room->title }}</h3>
+                                    @if($room->isForSell())
+                                        <span class="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-purple-100 text-purple-700">Sell</span>
+                                    @endif
+                                </div>
+                                <p class="mt-1 truncate text-xs text-slate-500"><i class="fas fa-location-dot mr-1 text-slate-400"></i>{{ $room->city }}</p>
+                                <p class="mt-1 text-sm font-extrabold {{ $room->isForSell() ? 'text-purple-700' : 'text-slate-900' }}">
+                                    @if($room->isForSell())
+                                        {{ $room->displayPrice() }}
+                                    @else
+                                        &#8377;{{ number_format($room->rent) }}<span class="text-xs font-normal text-slate-400">/month</span>
+                                    @endif
+                                </p>
+                            </div>
+                            <span class="hidden sm:inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase {{ $room->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($room->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600') }}">{{ $room->status === 'booked' ? ($room->isForSell() ? 'Sold' : 'Rented') : $room->status }}</span>
                         </div>
                     @empty
                         <div class="px-6 py-12 text-center"><i class="fas fa-house-circle-xmark text-3xl text-slate-300"></i><h3 class="mt-3 font-bold text-slate-900">No properties listed yet</h3><p class="mt-1 text-sm text-slate-500">Create your first property listing to get started.</p></div>

@@ -58,8 +58,15 @@
             </section>
 
             <section class="admin-room-kpis admin-kpis">
-                <div class="admin-room-kpi"><span>Rent</span><strong>&#8377;{{ number_format((float) $room->rent) }}/mo</strong></div>
-                <div class="admin-room-kpi"><span>Deposit</span><strong>&#8377;{{ number_format((float) $room->deposit) }}</strong></div>
+                @if($room->isForSell())
+                    <div class="admin-room-kpi"><span>Purpose</span><strong style="color:#7c3aed"><i class="fas fa-tag mr-1"></i>For Sale</strong></div>
+                    <div class="admin-room-kpi"><span>Sale Price</span><strong>&#8377;{{ $room->displayPrice() }}</strong></div>
+                    <div class="admin-room-kpi"><span>Possession</span><strong>{{ $room->possessionLabel() }}</strong></div>
+                @else
+                    <div class="admin-room-kpi"><span>Purpose</span><strong style="color:#059669"><i class="fas fa-key mr-1"></i>For Rent</strong></div>
+                    <div class="admin-room-kpi"><span>Rent</span><strong>&#8377;{{ number_format((float) $room->rent) }}/mo</strong></div>
+                    <div class="admin-room-kpi"><span>Deposit</span><strong>&#8377;{{ number_format((float) $room->deposit) }}</strong></div>
+                @endif
                 <div class="admin-room-kpi"><span>Property type</span><strong>{{ $room->propertyType?->name ?? 'Not set' }}</strong></div>
                 <div class="admin-room-kpi"><span>Availability</span><strong>{{ ucfirst($room->status) }}</strong></div>
             </section>
@@ -75,16 +82,25 @@
                     @endif
                 </div>
                 <dl class="grid gap-4 md:grid-cols-2">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Purpose</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->isForSell() ? 'For Sale' : 'For Rent' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Property type</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->propertyType?->name ?? 'Not set' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Property category</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->propertyCategory?->name ?? 'Not set' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Room type</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->roomTypeLabel() }}</dd></div>
+                    @if($room->isForSell())
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Sale Price</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->displayPrice() }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Possession Status</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->possessionLabel() }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Ownership Type</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->ownership_type ?: 'Not provided' }}</dd></div>
+                    @else
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Monthly Rent</dt><dd class="mt-1 text-sm font-semibold text-slate-800">&#8377;{{ number_format((float)$room->rent) }}/mo</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Deposit</dt><dd class="mt-1 text-sm font-semibold text-slate-800">&#8377;{{ number_format((float)$room->deposit) }}</dd></div>
+                        <div><dt class="text-[10px] font-bold uppercase text-slate-400">Preferred tenant</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->tenantTypeLabel() }}</dd></div>
+                    @endif
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Area</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->area_sqft ? number_format((float) $room->area_sqft, 2) . ' sq ft' : 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Address</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->address ?: 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">City</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->city ?: 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">State</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->state ?: 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Country</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->country ?: 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Furnishing</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->furnishingTypeLabel() }}</dd></div>
-                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Preferred tenant</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->tenantTypeLabel() }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Latitude</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->latitude ?? 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Longitude</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ $room->longitude ?? 'Not provided' }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Listing type</dt><dd class="mt-1 text-sm font-semibold text-slate-800">{{ ucfirst($room->listing_type ?? 'owner') }} @if($room->listing_type === 'broker') - Broker fee &#8377;{{ number_format((float) $room->broker_fee) }} @endif</dd></div>

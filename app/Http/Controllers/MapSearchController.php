@@ -19,11 +19,20 @@ class MapSearchController extends Controller
         if ($request->filled('city')) {
             $query->where('city', 'like', '%' . $request->city . '%');
         }
+        if ($request->filled('purpose') && in_array($request->purpose, ['rent', 'sell'], true)) {
+            $query->where('purpose', $request->purpose);
+        }
         if ($request->filled('min_rent')) {
             $query->where('rent', '>=', $request->min_rent);
         }
         if ($request->filled('max_rent')) {
             $query->where('rent', '<=', $request->max_rent);
+        }
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
         }
         if ($request->filled('property_type_id')) {
             $query->whereIn('property_type_id', (array) $request->property_type_id);
@@ -57,7 +66,11 @@ class MapSearchController extends Controller
                 'id'           => $room->id,
                 'slug'         => $room->slug,
                 'title'        => $room->title,
+                'purpose'      => $room->purpose ?? 'rent',
+                'is_for_sell'  => $room->isForSell(),
                 'rent'         => (float) $room->rent,
+                'price'        => (float) ($room->price ?? 0),
+                'display_price'=> $room->displayPrice(),
                 'city'         => $room->city,
                 'area'         => $room->address ?? $room->locality ?? null,
                 'lat'          => (float) $room->latitude,

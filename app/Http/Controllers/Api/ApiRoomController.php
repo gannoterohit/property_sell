@@ -25,13 +25,17 @@ class ApiRoomController extends BaseApiController
     public function index(Request $request)
     {
         $request->validate([
-            'min_rent' => ['nullable', 'numeric', 'min:0'],
-            'max_rent' => ['nullable', 'numeric', 'min:0'],
-            'min_area_sqft' => ['nullable', 'numeric', 'min:0'],
-            'max_area_sqft' => ['nullable', 'numeric', 'min:0'],
-            'listing_type' => ['nullable', 'in:owner,broker'],
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'purpose'             => ['nullable', 'in:rent,sell'],
+            'min_rent'            => ['nullable', 'numeric', 'min:0'],
+            'max_rent'            => ['nullable', 'numeric', 'min:0'],
+            'min_price'           => ['nullable', 'numeric', 'min:0'],
+            'max_price'           => ['nullable', 'numeric', 'min:0'],
+            'possession_status'   => ['nullable', 'in:ready_to_move,under_construction'],
+            'min_area_sqft'       => ['nullable', 'numeric', 'min:0'],
+            'max_area_sqft'       => ['nullable', 'numeric', 'min:0'],
+            'listing_type'        => ['nullable', 'in:owner,broker'],
+            'lat'                 => ['nullable', 'numeric', 'between:-90,90'],
+            'lng'                 => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         $query = Room::query()
@@ -42,12 +46,31 @@ class ApiRoomController extends BaseApiController
             $query->where('city', 'like', '%'.$request->city.'%');
         }
 
+        // Purpose filter
+        if ($request->filled('purpose') && in_array($request->purpose, ['rent', 'sell'], true)) {
+            $query->where('purpose', $request->purpose);
+        }
+
         if ($request->filled('min_rent')) {
             $query->where('rent', '>=', $request->min_rent);
         }
 
         if ($request->filled('max_rent')) {
             $query->where('rent', '<=', $request->max_rent);
+        }
+
+        // Sell price range filters
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Possession status filter (sell only)
+        if ($request->filled('possession_status') && in_array($request->possession_status, ['ready_to_move', 'under_construction'], true)) {
+            $query->where('possession_status', $request->possession_status);
         }
 
         $roomTypeFilter = $request->input('room_type_option_id', $request->input('room_type'));
@@ -131,9 +154,9 @@ class ApiRoomController extends BaseApiController
             $query->orderBy('is_featured', 'desc');
 
             if ($sortBy === 'rent_asc') {
-                $query->orderBy('rent', 'asc');
+                $query->orderBy(\Illuminate\Support\Facades\DB::raw('COALESCE(price, rent)'), 'asc');
             } elseif ($sortBy === 'rent_desc') {
-                $query->orderBy('rent', 'desc');
+                $query->orderBy(\Illuminate\Support\Facades\DB::raw('COALESCE(price, rent)'), 'desc');
             } else {
                 $query->orderBy('created_at', 'desc');
             }
@@ -289,9 +312,13 @@ class ApiRoomController extends BaseApiController
                 'integer',
                 Rule::exists('property_categories', 'id')->where(fn ($query) => $query->where('status', true)->where('property_type_id', $request->property_type_id)),
             ],
-            'rent' => 'required|numeric|min:0',
-            'deposit' => 'nullable|numeric|min:0',
-            'area_sqft' => 'nullable|numeric|min:0',
+            'purpose'             => 'required|in:rent,sell',
+            'rent'                => 'required_if:purpose,rent|nullable|numeric|min:0',
+            'price'               => 'required_if:purpose,sell|nullable|numeric|min:0',
+            'deposit'             => 'nullable|numeric|min:0',
+            'area_sqft'           => 'nullable|numeric|min:0',
+            'possession_status'   => 'nullable|in:ready_to_move,under_construction',
+            'ownership_type'      => 'nullable|string|max:100',
             'city' => 'required|string',
             'state' => 'nullable|string',
             'country' => 'nullable|string',
@@ -569,9 +596,13 @@ class ApiRoomController extends BaseApiController
                 'integer',
                 Rule::exists('property_categories', 'id')->where(fn ($query) => $query->where('status', true)->where('property_type_id', $request->property_type_id)),
             ],
-            'rent' => 'required|numeric|min:0',
-            'deposit' => 'nullable|numeric|min:0',
-            'area_sqft' => 'nullable|numeric|min:0',
+            'purpose'             => 'required|in:rent,sell',
+            'rent'                => 'required_if:purpose,rent|nullable|numeric|min:0',
+            'price'               => 'required_if:purpose,sell|nullable|numeric|min:0',
+            'deposit'             => 'nullable|numeric|min:0',
+            'area_sqft'           => 'nullable|numeric|min:0',
+            'possession_status'   => 'nullable|in:ready_to_move,under_construction',
+            'ownership_type'      => 'nullable|string|max:100',
             'city' => 'required|string',
             'state' => 'nullable|string',
             'country' => 'nullable|string',

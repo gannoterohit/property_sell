@@ -26,6 +26,9 @@
                          onerror="this.src='{{ asset('assets/images/default-room.svg') }}'">
                     
                     <div class="related-badges">
+                        @if($relatedRoom->isForSell())
+                            <span class="badge-featured" style="background:#7c3aed;color:#fff;"><i class="fas fa-tag text-[9px] mr-1"></i>For Sale</span>
+                        @endif
                         @if($relatedRoom->is_featured)
                             <span class="badge-featured"><i class="fas fa-star text-[9px] mr-1"></i>Featured</span>
                         @endif
@@ -37,8 +40,12 @@
                     </div>
 
                     <div class="related-price-tag">
-                        <strong>₹{{ number_format((float)$relatedRoom->rent) }}</strong>
-                        <small>/mo</small>
+                        @if($relatedRoom->isForSell())
+                            <strong style="color:#7c3aed;">{{ $relatedRoom->displayPrice() }}</strong>
+                        @else
+                            <strong>₹{{ number_format((float)$relatedRoom->rent) }}</strong>
+                            <small>/mo</small>
+                        @endif
                     </div>
                 </div>
 

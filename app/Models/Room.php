@@ -18,9 +18,13 @@ class Room extends Model
         'furnishing_option_id',
         'tenant_option_id',
         'amenities',
+        'purpose',
         'rent',
+        'price',
         'deposit',
         'area_sqft',
+        'possession_status',
+        'ownership_type',
         'city',
         'state',
         'country',
@@ -44,17 +48,131 @@ class Room extends Model
         'expires_at',
         'moderation_status',
         'moderation_note',
+        'features',
     ];
 
     protected $casts = [
-        'is_featured' => 'boolean',
-        'listing_fee_paid' => 'boolean',
-        'area_sqft' => 'decimal:2',
-        'photos' => 'array',
-        'amenities' => 'array',
-        'landmarks' => 'array',
-        'expires_at' => 'datetime',
+        'is_featured'         => 'boolean',
+        'listing_fee_paid'    => 'boolean',
+        'area_sqft'           => 'decimal:2',
+        'price'               => 'integer',
+        'photos'              => 'array',
+        'amenities'           => 'array',
+        'landmarks'           => 'array',
+        'features'            => 'array',
+        'expires_at'          => 'datetime',
     ];
+
+    // =========================================================
+    // SELL / RENT HELPER METHODS
+    // =========================================================
+
+    /**
+     * Is this a "For Rent" listing?
+     */
+    public function isForRent(): bool
+    {
+        return ($this->purpose ?? 'rent') !== 'sell';
+    }
+
+    /**
+     * Is this a "For Sale" listing?
+     */
+    public function isForSell(): bool
+    {
+        return ($this->purpose ?? 'rent') === 'sell';
+    }
+
+    /**
+     * Smart price display:
+     * - Rent: "₹15,000/mo"
+     * - Sell: "₹45.5 L" or "₹1.2 Cr"
+     */
+    public function displayPrice(): string
+    {
+        if ($this->isForSell()) {
+            $price = (int) ($this->price ?? 0);
+            if ($price >= 10_000_000) {
+                return '₹' . rtrim(rtrim(number_format($price / 10_000_000, 2), '0'), '.') . ' Cr';
+            }
+            if ($price >= 100_000) {
+                return '₹' . rtrim(rtrim(number_format($price / 100_000, 2), '0'), '.') . ' L';
+            }
+            return '₹' . number_format($price);
+        }
+        return '₹' . number_format((int) ($this->rent ?? 0)) . '/mo';
+    }
+
+    /**
+     * Human-readable possession status label.
+     */
+    public function possessionLabel(): string
+    {
+        return match ($this->possession_status) {
+            'ready_to_move'      => 'Ready to Move',
+            'under_construction' => 'Under Construction',
+            default              => 'N/A',
+        };
+    }
+
+    /**
+     * Helper to retrieve an attribute from features JSON.
+     */
+    public function feature(string $key, mixed $default = null): mixed
+    {
+        return data_get($this->features, $key, $default);
+    }
+
+    public function isCommercial(): bool
+    {
+        $typeName = strtolower($this->propertyType?->slug ?? $this->propertyType?->name ?? '');
+        return in_array($typeName, ['shop', 'office', 'showroom', 'warehouse'], true) || !empty($this->feature('commercial_type'));
+    }
+
+    public function isPlot(): bool
+    {
+        $typeName = strtolower($this->propertyType?->slug ?? $this->propertyType?->name ?? '');
+        return str_contains($typeName, 'plot') || str_contains($typeName, 'land');
+    }
+
+    public function ratePerSqft(): ?float
+    {
+        $area = (float) ($this->feature('super_builtup_area') ?: ($this->feature('carpet_area') ?: $this->area_sqft));
+        if ($area <= 0) return null;
+
+        if ($this->isForSell() && $this->price > 0) {
+            return round($this->price / $area);
+        }
+        if ($this->isForRent() && $this->rent > 0) {
+            return round($this->rent / $area, 1);
+        }
+        return null;
+    }
+
+    // =========================================================
+    // QUERY SCOPES FOR PURPOSE
+    // =========================================================
+
+    /** Scope: only rent listings */
+    public function scopeForRent($query)
+    {
+        return $query->where('purpose', 'rent');
+    }
+
+    /** Scope: only sell listings */
+    public function scopeForSell($query)
+    {
+        return $query->where('purpose', 'sell');
+    }
+
+    /** Scope: filter by purpose (rent|sell), or no filter if null/empty */
+    public function scopePurpose($query, ?string $purpose)
+    {
+        if ($purpose && in_array($purpose, ['rent', 'sell'], true)) {
+            return $query->where('purpose', $purpose);
+        }
+        return $query;
+    }
 
     public function isExpired(): bool
     {

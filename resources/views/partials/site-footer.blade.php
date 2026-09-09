@@ -55,7 +55,7 @@
                     @endif
                 </a>
                 <p class="text-sm leading-relaxed">
-                    India's most trusted platform for room rentals. Connect directly with verified owners. Find your stay with zero brokerage.
+                    India's most trusted real estate platform to rent and buy verified properties. Connect directly with verified owners and trusted agents with zero hassle.
                 </p>
                 @if(count($social))
                 <div class="flex gap-3">
@@ -74,7 +74,9 @@
             <div>
                 <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Quick Links</h3>
                 <ul class="space-y-2.5 text-sm">
-                    <li><a href="{{ route('rooms.index') }}" class="text-slate-400 hover:text-white transition">Browse Properties</a></li>
+                    <li><a href="{{ route('rooms.index', ['purpose' => 'sell']) }}" class="text-purple-400 hover:text-white transition font-bold flex items-center gap-1.5"><i class="fas fa-tag text-xs"></i> Properties For Sale (Buy)</a></li>
+                    <li><a href="{{ route('rooms.index', ['purpose' => 'rent']) }}" class="text-slate-400 hover:text-white transition flex items-center gap-1.5"><i class="fas fa-key text-xs"></i> Properties For Rent</a></li>
+                    <li><a href="{{ route('rooms.index') }}" class="text-slate-400 hover:text-white transition">All Properties Directory</a></li>
                     <li><a href="{{ route('pages.how-it-works') }}" class="{{ request()->routeIs('pages.how-it-works') ? 'text-indigo-400 font-semibold' : 'text-slate-400' }} hover:text-white transition">How It Works</a></li>
                     <li><a href="{{ route('pages.faq') }}" class="{{ request()->routeIs('pages.faq') ? 'text-indigo-400 font-semibold' : 'text-slate-400' }} hover:text-white transition">FAQ</a></li>
                     <li><a href="{{ route('blogs.index') }}" class="text-slate-400 hover:text-white transition">Blog</a></li>

@@ -298,13 +298,50 @@
             <p class="text-sm text-slate-500 mb-5">Set your price and add photos</p>
 
             <div class="space-y-5">
+                <!-- Purpose Toggle -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Listing Purpose *</label>
+                    <div class="flex items-center gap-6">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="purpose" value="rent" checked class="broker-purpose-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm font-bold text-slate-800"><i class="fas fa-key text-indigo-500 mr-1"></i> For Rent</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="purpose" value="sell" class="broker-purpose-radio h-4 w-4 text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm font-bold text-slate-800"><i class="fas fa-tag text-purple-500 mr-1"></i> For Sale / Buy</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
+                    <div id="brokerRentField">
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Monthly Rent (₹) *</label>
-                        <input type="number" name="rent" min="0" placeholder="e.g. 15000"
+                        <input type="number" name="rent" id="broker_rent_input" min="0" placeholder="e.g. 15000"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-bold">
                     </div>
-                    <div>
+                    <div id="brokerPriceField" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Total Sale Price (₹) *</label>
+                        <input type="number" name="price" id="broker_price_input" min="0" placeholder="e.g. 4500000"
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-bold">
+                    </div>
+                    <div id="brokerPossessionField" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Possession Status</label>
+                        <select name="possession_status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-semibold">
+                            <option value="">-- Select --</option>
+                            <option value="ready_to_move">Ready to Move</option>
+                            <option value="under_construction">Under Construction</option>
+                        </select>
+                    </div>
+                    <div id="brokerOwnershipField" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Ownership Type</label>
+                        <select name="ownership_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-semibold">
+                            <option value="freehold">Freehold</option>
+                            <option value="leasehold">Leasehold</option>
+                            <option value="power_of_attorney">Power of Attorney</option>
+                            <option value="cooperative_society">Cooperative Society</option>
+                        </select>
+                    </div>
+                    <div id="brokerDepositField">
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Security Deposit (₹)</label>
                         <input type="number" name="deposit" min="0" placeholder="e.g. 30000"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
@@ -530,6 +567,7 @@
                 }
             }
         });
+        toggleBrokerPurpose();
     }
 
     async function checkExistingDraft() {
@@ -587,15 +625,32 @@
         }
     }
 
+    function toggleBrokerPurpose() {
+        const purposeEl = form.querySelector('input[name="purpose"]:checked');
+        const isSell = purposeEl && purposeEl.value === 'sell';
+        const rentField = $('brokerRentField');
+        const priceField = $('brokerPriceField');
+        const possessionField = $('brokerPossessionField');
+        const ownershipField = $('brokerOwnershipField');
+        const depositField = $('brokerDepositField');
+
+        if (rentField) rentField.classList.toggle('hidden', isSell);
+        if (priceField) priceField.classList.toggle('hidden', !isSell);
+        if (possessionField) possessionField.classList.toggle('hidden', !isSell);
+        if (ownershipField) ownershipField.classList.toggle('hidden', !isSell);
+        if (depositField) depositField.classList.toggle('hidden', isSell);
+    }
+
     function renderReview() {
         const data = collectStepData(TOTAL_STEPS);
+        const isSell = (data.purpose === 'sell');
         const rows = [
+            ['Listing Purpose', isSell ? 'For Sale / Buy' : 'For Rent'],
             ['Title', data.title],
-            ['Type', data.property_type_id ? '{{ $propertyTypes->pluck("name","id")->toJson() }}' : ''],
             ['Address', data.address],
             ['City', data.city],
-            ['Rent', data.rent ? '₹' + data.rent : ''],
-            ['Deposit', data.deposit ? '₹' + data.deposit : ''],
+            isSell ? ['Sale Price', data.price ? '₹' + Number(data.price).toLocaleString('en-IN') : '—'] : ['Rent', data.rent ? '₹' + Number(data.rent).toLocaleString('en-IN') + ' / mo' : '—'],
+            isSell ? ['Possession', data.possession_status ? (data.possession_status === 'ready_to_move' ? 'Ready to Move' : 'Under Construction') : '—'] : ['Deposit', data.deposit ? '₹' + Number(data.deposit).toLocaleString('en-IN') : '—'],
             ['Furnishing', data.furnishing_type],
         ];
         let html = '<div class="space-y-2 text-sm">';
@@ -607,6 +662,8 @@
     }
 
     function validateAllSteps() {
+        const purposeEl = form.querySelector('input[name="purpose"]:checked');
+        const isSell = purposeEl && purposeEl.value === 'sell';
         const requiredFields = [
             { step: 1, name: 'title',            label: 'Property Title' },
             { step: 1, name: 'property_type_id', label: 'Property Type' },
@@ -619,7 +676,9 @@
             { step: 3, name: 'furnishing_type',  label: 'Furnishing' },
             { step: 3, name: 'tenant_type',      label: 'Preferred Tenant' },
             { step: 3, name: 'available_from',   label: 'Available From' },
-            { step: 5, name: 'rent',             label: 'Monthly Rent' },
+            ...(isSell
+                ? [{ step: 5, name: 'price', label: 'Total Sale Price' }]
+                : [{ step: 5, name: 'rent',  label: 'Monthly Rent' }]),
         ];
 
         const errors = [];
@@ -795,6 +854,11 @@
             reader.readAsDataURL(file);
         });
     }
+
+    document.querySelectorAll('.broker-purpose-radio').forEach(r => {
+        r.addEventListener('change', toggleBrokerPurpose);
+    });
+    toggleBrokerPurpose();
 
     showStep(1);
     checkExistingDraft();

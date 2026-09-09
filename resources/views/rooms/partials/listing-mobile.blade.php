@@ -31,8 +31,11 @@
                              onerror="this.onerror=null; this.src='https://placehold.co/200x150?text=Room';">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                         <div class="absolute bottom-2 left-2 text-white">
-                            <p class="text-sm font-bold">₹{{ number_format($room->rent) }}</p>
+                            <p class="text-sm font-bold">{{ $room->isForSell() ? $room->displayPrice() : '₹' . number_format($room->rent) }}</p>
                         </div>
+                        @if($room->isForSell())
+                            <span class="absolute top-2 left-2 bg-purple-600 text-[9px] font-bold px-1.5 py-0.5 rounded text-white z-10">Sale</span>
+                        @endif
                         @if($room->is_featured)
                             <span class="absolute top-2 right-2 bg-yellow-400 text-[9px] font-bold px-1.5 py-0.5 rounded text-yellow-900 z-10">Featured</span>
                         @endif

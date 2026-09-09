@@ -160,26 +160,7 @@ body > section {
 }
 @media (max-width: 1023px) { .resp-split { grid-template-columns: 1fr; gap: 18px; } }
 
-/* ── 11. Desktop navbar inner (used in site-navbar.blade.php) ──────────────── */
-.desktop-navbar-inner {
-    max-width: 1440px;
-    width: min(1440px, calc(100% - 48px));
-    margin: 0 auto;
-    padding-inline: 0;
-}
-@media (min-width: 1600px) {
-    .desktop-navbar-inner {
-        max-width: 1600px;
-        width: min(1600px, calc(100% - 64px));
-    }
-}
-@media (max-width: 1366px) {
-    .desktop-navbar-inner {
-        max-width: 1200px;
-        width: min(1200px, calc(100% - 40px));
-        padding-inline: 1.25rem;
-    }
-}
+/* ── 11. Desktop navbar (managed in public/css/navbar.css) ─────────────────── */
 
 /* ── 12. Auth shell (used in auth/login.blade.php & auth/register.blade.php) ── */
 .auth-shell,

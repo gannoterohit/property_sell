@@ -1,15 +1,17 @@
 @php
+    $isSell = $room->isForSell();
     $shareTitle = $room->title;
-    $shareRent = number_format((float)$room->rent);
-    $shareDeposit = number_format((float)($room->deposit ?? 0));
+    $sharePriceText = $isSell ? "💰 *Price:* " . $room->displayPrice() . "\n" : "💰 *Rent:* ₹" . number_format((float)$room->rent) . "/month\n";
+    $shareDepositText = $isSell ? "" : "🔒 *Security Deposit:* ₹" . number_format((float)($room->deposit ?? 0)) . "\n";
     $shareLocality = ($room->locality ? $room->locality . ', ' : '') . $room->city;
     $shareFurnishing = ucfirst(str_replace('_', ' ', $room->furnishing_type ?? 'Semi-Furnished'));
-    $shareType = $room->roomTypeOption?->label ?? 'Rental Property';
+    $shareType = $room->roomTypeOption?->label ?? ($isSell ? 'Property for Sale' : 'Rental Property');
     $shareUrl = route('rooms.show', $room->slug ?: $room->id);
 
     $cardMessage = "🏠 *{$shareTitle}*\n"
-        . "💰 *Rent:* ₹{$shareRent}/month\n"
-        . "🔒 *Security Deposit:* ₹{$shareDeposit}\n"
+        . ($isSell ? "🏷️ *Purpose:* Property For Sale\n" : "")
+        . $sharePriceText
+        . $shareDepositText
         . "📍 *Location:* {$shareLocality}\n"
         . "🛋️ *Furnishing:* {$shareFurnishing}\n"
         . "🛏️ *Type:* {$shareType}\n\n"

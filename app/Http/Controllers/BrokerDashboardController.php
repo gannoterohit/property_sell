@@ -72,6 +72,11 @@ class BrokerDashboardController extends Controller
         if ($listingStatus = $request->get('listing_status')) {
             $query->where('listing_status', $listingStatus);
         }
+        if ($purpose = $request->get('purpose')) {
+            if (in_array($purpose, ['rent', 'sell'], true)) {
+                $query->where('purpose', $purpose);
+            }
+        }
 
         $properties = $query->latest()->paginate(20);
 

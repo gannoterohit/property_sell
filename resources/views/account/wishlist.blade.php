@@ -12,11 +12,19 @@
                     <article class="saved-card" id="wishlist-item-{{ $room->id }}">
                         <div class="saved-image">
                             <img src="{{ $room->photo_url }}" alt="{{ $room->title }}" width="400" height="300" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='{{ asset('assets/images/default-room.svg') }}'">
+                            @if($room->isForSell())<span class="featured-tag" style="background:#7c3aed;">For Sale</span>@endif
                             @if($room->is_featured)<span class="featured-tag">Featured</span>@endif
                             <button type="button" onclick="removeFromWishlist({{ $room->id }},this)" aria-label="Remove {{ $room->title }} from saved rooms"><i class="fas fa-heart"></i></button>
                         </div>
                         <div class="saved-copy">
-                            <div class="saved-price"><strong>&#8377;{{ number_format((float)$room->rent) }}</strong><span>/ month</span></div>
+                            <div class="saved-price">
+                                @if($room->isForSell())
+                                    <strong style="color: #7c3aed;">{{ $room->displayPrice() }}</strong>
+                                    <span style="background:#f3e8ff;color:#7c3aed;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;margin-left:4px;">FOR SALE</span>
+                                @else
+                                    <strong>&#8377;{{ number_format((float)$room->rent) }}</strong><span>/ month</span>
+                                @endif
+                            </div>
                             <h2>{{ $room->title }}</h2>
                             <p><i class="fas fa-location-dot"></i>{{ $room->city ?: $room->address }}</p>
                             <div class="saved-meta">
