@@ -107,9 +107,9 @@
         }
         .loading-overlay { position: fixed; inset: 0; background: #fff; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         @font-face { font-family: 'Font Awesome 6 Free'; font-display: swap; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-premium); color: var(--text-main); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-premium); color: var(--text-main); overflow-x: clip; -webkit-tap-highlight-color: transparent; }
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-        html, body { display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        html, body { display: flex; flex-direction: column; min-height: 100vh; overflow-x: clip; }
         main { flex: 1; }
         footer { margin-top: auto; }
     </style>
@@ -124,7 +124,7 @@
 
     @stack('styles')
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen mobile-app-view {{ request()->routeIs('admin.*') ? 'admin-page' : '' }}">
+<body class="bg-gray-50 flex flex-col min-h-screen mobile-app-view {{ request()->routeIs('admin.*') ? 'admin-page' : '' }} {{ request()->routeIs('rooms.index') ? 'rooms-listing-page' : '' }}">
     <div id="page-scroll-progress" class="page-scroll-progress" role="progressbar" aria-label="Page scroll progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
     @yield('layout-top-banner')
     @yield('layout-navigation')

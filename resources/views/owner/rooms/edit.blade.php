@@ -87,7 +87,7 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div id="editRoomTypeGroup" class="{{ $room->isPlot() ? 'hidden' : '' }} grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Unit / Room Type</label>
                                         <select name="room_type" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
@@ -244,46 +244,76 @@
                                     </div>
                                 </div>
 
-                                {{-- DIMENSIONS & AREA --}}
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Built-up Area (sqft)</label>
-                                        <input type="number" name="area_sqft" min="0" step="0.01" value="{{ $room->area_sqft }}"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                {{-- PLOT / LAND SPECIFICATIONS --}}
+                                <div id="editPlotSpecs" class="{{ $room->isPlot() ? '' : 'hidden' }} space-y-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200">
+                                    <div class="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fas fa-layer-group"></i> Plot & Land Dimensions
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Carpet Area (sqft)</label>
-                                        <input type="number" name="carpet_area" min="0" value="{{ $room->feature('carpet_area') }}" placeholder="e.g. 750"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Super Builtup (sqft)</label>
-                                        <input type="number" name="super_builtup_area" min="0" value="{{ $room->feature('super_builtup_area') }}" placeholder="e.g. 1000"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Plot Area</label>
+                                            <input type="number" name="plot_area" min="0" value="{{ $room->feature('plot_area') }}" placeholder="e.g. 1500"
+                                                   class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Measurement Unit</label>
+                                            <select name="plot_area_unit" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="sqft" {{ $room->feature('plot_area_unit', 'sqft') === 'sqft' ? 'selected' : '' }}>Square Feet (Sq.Ft)</option>
+                                                <option value="sqyd" {{ $room->feature('plot_area_unit') === 'sqyd' ? 'selected' : '' }}>Square Yards (Sq.Yards)</option>
+                                                <option value="gaj" {{ $room->feature('plot_area_unit') === 'gaj' ? 'selected' : '' }}>Gaj</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Boundary Wall</label>
+                                            <select name="gated_community" class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition text-sm font-medium">
+                                                <option value="1" {{ $room->feature('gated_community') ? 'selected' : '' }}>Yes (Boundary Built)</option>
+                                                <option value="0" {{ !$room->feature('gated_community') ? 'selected' : '' }}>No Boundary</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {{-- STRUCTURE & FLOOR DETAILS --}}
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Bathrooms</label>
-                                        <input type="number" name="bathrooms" min="0" max="20" value="{{ $room->feature('bathrooms', $room->bathrooms) }}" placeholder="e.g. 2"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                {{-- RESIDENTIAL DIMENSIONS & STRUCTURE --}}
+                                <div id="editResidentialSpecs" class="{{ ($room->isPlot() || $room->isCommercial()) ? 'hidden' : '' }} space-y-4">
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Built-up Area (sqft)</label>
+                                            <input type="number" name="area_sqft" min="0" step="0.01" value="{{ $room->area_sqft }}"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Carpet Area (sqft)</label>
+                                            <input type="number" name="carpet_area" min="0" value="{{ $room->feature('carpet_area') }}" placeholder="e.g. 750"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Super Builtup (sqft)</label>
+                                            <input type="number" name="super_builtup_area" min="0" value="{{ $room->feature('super_builtup_area') }}" placeholder="e.g. 1000"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Balconies</label>
-                                        <input type="number" name="balconies" min="0" max="10" value="{{ $room->feature('balconies', $room->balconies) }}" placeholder="e.g. 1"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Floor No</label>
-                                        <input type="number" name="floor_no" min="-2" max="150" value="{{ $room->feature('floor_no', $room->floor) }}" placeholder="e.g. 3"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Total Floors</label>
-                                        <input type="number" name="total_floors" min="0" max="150" value="{{ $room->feature('total_floors', $room->total_floors) }}" placeholder="e.g. 10"
-                                               class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Bathrooms</label>
+                                            <input type="number" name="bathrooms" min="0" max="20" value="{{ $room->feature('bathrooms', $room->bathrooms) }}" placeholder="e.g. 2"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Balconies</label>
+                                            <input type="number" name="balconies" min="0" max="10" value="{{ $room->feature('balconies', $room->balconies) }}" placeholder="e.g. 1"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Floor No</label>
+                                            <input type="number" name="floor_no" min="-2" max="150" value="{{ $room->feature('floor_no', $room->floor) }}" placeholder="e.g. 3"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Total Floors</label>
+                                            <input type="number" name="total_floors" min="0" max="150" value="{{ $room->feature('total_floors', $room->total_floors) }}" placeholder="e.g. 10"
+                                                   class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -309,7 +339,7 @@
                                 </div>
 
                                 {{-- COMMERCIAL SPECIFIC ATTRIBUTES --}}
-                                <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4">
+                                <div id="editCommercialSpecs" class="{{ $room->isCommercial() ? '' : 'hidden' }} p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4">
                                     <div class="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
                                         <i class="fas fa-briefcase"></i> Commercial & Shop Features
                                     </div>
@@ -347,6 +377,29 @@
                                 </div>
 
                                 <script>
+                                function syncEditPropertyTypeUI() {
+                                    var typeSelect = document.getElementById('property_type_id');
+                                    if (!typeSelect) return;
+                                    var selectedOption = typeSelect.options[typeSelect.selectedIndex];
+                                    var typeText = (selectedOption ? selectedOption.text : '').toLowerCase();
+
+                                    var isPlot = typeText.includes('plot') || typeText.includes('land');
+                                    var isCommercial = typeText.includes('shop') || typeText.includes('office') || typeText.includes('showroom') || typeText.includes('warehouse') || typeText.includes('commercial');
+
+                                    var plotSec = document.getElementById('editPlotSpecs');
+                                    var commSec = document.getElementById('editCommercialSpecs');
+                                    var resSec = document.getElementById('editResidentialSpecs');
+                                    var roomTypeSec = document.getElementById('editRoomTypeGroup');
+
+                                    if (plotSec) plotSec.classList.toggle('hidden', !isPlot);
+                                    if (commSec) commSec.classList.toggle('hidden', !isCommercial);
+                                    if (resSec) resSec.classList.toggle('hidden', isPlot || isCommercial);
+                                    if (roomTypeSec) roomTypeSec.classList.toggle('hidden', isPlot);
+                                }
+
+                                document.getElementById('property_type_id')?.addEventListener('change', syncEditPropertyTypeUI);
+                                syncEditPropertyTypeUI();
+
                                 document.querySelectorAll('.edit-purpose-radio').forEach(function(r){
                                     r.addEventListener('change', function(){
                                         var isSell = (this.value === 'sell');

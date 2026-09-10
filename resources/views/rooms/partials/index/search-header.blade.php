@@ -1,8 +1,11 @@
 <!-- ===== TOP SEARCH HEADER BAR ===== -->
-<div class="rooms-search-shell border-b border-slate-200/80 hidden md:block">
-    <div class="container mx-auto px-6">
-        <div class="rooms-search-panel bg-white border border-slate-200 p-4">
+<div class="rooms-search-shell border-b border-slate-200/80 hidden lg:block">
+    <div class="w-full">
+        <div class="rooms-search-panel bg-white border border-slate-200/90 px-4 py-2.5 rounded-2xl shadow-sm">
             <form action="{{ route('rooms.index') }}" method="GET" class="flex flex-wrap gap-4 items-center justify-between">
+                @if(request('purpose'))
+                    <input type="hidden" name="purpose" value="{{ request('purpose') }}">
+                @endif
                 <!-- Location -->
                 <div class="flex-1 min-w-[200px] border-r border-slate-100 pr-4">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between mb-1">

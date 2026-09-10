@@ -9,7 +9,7 @@
 @section('owner-content')
 <div class="owner-rooms-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="owner-room-stats">
-                @foreach([['All properties','all'],['Active','active'],['Pending','pending'],['Rented','booked']] as $item)
+                @foreach([['All properties','all'],['Active','active'],['Pending','pending'],['Rented / Sold','booked']] as $item)
                     <div class="owner-room-stat"><p class="text-xs font-semibold text-slate-500">{{ $item[0] }}</p><p class="mt-2 text-2xl font-extrabold text-slate-950">{{ $roomCounts[$item[1]] }}</p></div>
                 @endforeach
             </div>
@@ -41,9 +41,9 @@
                                 <div class="mt-5 grid grid-cols-2 gap-3"><a href="{{ route('owner.rooms.show', $room) }}" class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"><i class="fas fa-eye"></i>View</a><a href="{{ route('owner.rooms.edit', $room) }}" class="flex items-center justify-center gap-2 rounded-xl bg-indigo-50 py-2.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100"><i class="fas fa-pen"></i>Edit</a></div>
                                 @if($room->status === 'active')
                                     @if($room->isForSell())
-                                        <button type="button" onclick="markRoomRented({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-50 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-100"><i class="fas fa-tag"></i>Mark as Sold</button>
+                                        <button type="button" onclick="markRoomRented({{ $room->id }}, 'sold')" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-50 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-100"><i class="fas fa-tag"></i>Mark as Sold</button>
                                     @else
-                                        <button type="button" onclick="markRoomRented({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100"><i class="fas fa-key"></i>Mark as Rented</button>
+                                        <button type="button" onclick="markRoomRented({{ $room->id }}, 'rented')" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100"><i class="fas fa-key"></i>Mark as Rented</button>
                                     @endif
                                 @elseif($room->status === 'booked')
                                     <button type="button" onclick="makeRoomAvailable({{ $room->id }})" class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white hover:bg-emerald-700"><i class="fas fa-rotate"></i>Make Available</button>
@@ -72,11 +72,25 @@ async function ownerRoomPost(url, payload = {}) {
     return data;
 }
 
-async function markRoomRented(roomId) {
-    const result = await Swal.fire({ title: 'Mark property as rented?', text: 'This property will stop appearing to property seekers.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, mark rented', confirmButtonColor: '#e11d48' });
+async function markRoomRented(roomId, actionType = 'rented') {
+    const isSold = (actionType === 'sold');
+    const label = isSold ? 'sold' : 'rented';
+    const result = await Swal.fire({ 
+        title: `Mark property as ${label}?`, 
+        text: 'This property will stop appearing to property seekers.', 
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonText: `Yes, mark ${label}`, 
+        confirmButtonColor: '#e11d48' 
+    });
     if (!result.isConfirmed) return;
-    try { const data = await ownerRoomPost(`{{ route('owner.rooms.markBooked', ':room') }}`.replace(':room', roomId)); await Swal.fire('Property rented', data.message, 'success'); location.reload(); }
-    catch (error) { Swal.fire('Could not update property', error.message, 'error'); }
+    try { 
+        const data = await ownerRoomPost(`{{ route('owner.rooms.markBooked', ':room') }}`.replace(':room', roomId)); 
+        await Swal.fire(`Property marked as ${label}`, data.message, 'success'); 
+        location.reload(); 
+    } catch (error) { 
+        Swal.fire('Could not update property', error.message, 'error'); 
+    }
 }
 
 async function makeRoomAvailable(roomId) {

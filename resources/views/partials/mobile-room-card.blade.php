@@ -25,103 +25,87 @@
             </div>
         @endif
         
-        <!-- Tags Overlay - Top Left -->
-        <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-            <div class="flex flex-wrap gap-1.5">
-                <span class="bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[9px] font-extrabold text-slate-800 shadow-sm uppercase tracking-wider">
-                    {{ $room->roomTypeLabel() }}
+        <!-- Minimal Image Tags: Purpose & Featured Only -->
+        <div class="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+            @if($room->isForSell())
+                <span class="bg-violet-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1 backdrop-blur-md">
+                    <i class="fas fa-tag text-[9px]"></i> For Sale
                 </span>
-                {{-- Purpose badge --}}
-                @if($room->isForSell())
-                    <span class="bg-purple-600 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
-                        <i class="fas fa-tag text-[8px]"></i> For Sale
-                    </span>
-                @else
-                    <span class="bg-emerald-500 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
-                        <i class="fas fa-key text-[8px]"></i> For Rent
-                    </span>
-                @endif
-                @if($room->listing_type === 'broker')
-                    <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1">
-                        <i class="fas fa-building text-[8px]"></i> Verified Agency
-                    </span>
-                @else
-                    <span class="bg-emerald-500 text-white px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider">
-                        No Broker Fee
-                    </span>
-                @endif
-                @if($room->is_featured)
-                    <span class="bg-amber-400 text-amber-900 px-2 py-1 rounded-md text-[9px] font-black shadow-sm uppercase tracking-wider">
-                        Featured
-                    </span>
-                @endif
-            </div>
-        </div>
-
-        <!-- Tags Overlay - Top Right -->
-        <div class="absolute top-3 right-3">
-            @if($room->propertyType?->name)
-                <span class="text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg" style="background: rgba(var(--primary-rgb), 0.9);">
-                    {{ $room->propertyType->name }}
+            @else
+                <span class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-black shadow-sm uppercase tracking-wider flex items-center gap-1 backdrop-blur-md">
+                    <i class="fas fa-key text-[9px]"></i> For Rent
+                </span>
+            @endif
+            @if($room->is_featured)
+                <span class="bg-amber-500 text-white px-2 py-1 rounded-lg text-[10px] font-black shadow-sm uppercase tracking-wider">
+                    <i class="fas fa-star text-[9px]"></i> Featured
                 </span>
             @endif
         </div>
 
+        <!-- Wishlist heart top-right -->
+        <div class="absolute top-3 right-3 z-10">
+            <button type="button" onclick="toggleWishlist(event, {{ $room->id }})" 
+                    class="w-8 h-8 rounded-full bg-white/95 text-slate-400 hover:text-rose-500 shadow-md flex items-center justify-center text-xs active:scale-90 transition-all">
+                <i class="far fa-heart"></i>
+            </button>
+        </div>
+
         <!-- Bottom Gradient Overlay -->
-        <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+        <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
     </a>
     
     <!-- Content Section -->
     <div class="p-4">
+        <!-- Meta Row: Category & Lister Status -->
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                <i class="fas fa-building text-[10px] text-slate-400"></i>
+                {{ $room->roomTypeLabel() ?: ($room->propertyCategory?->name ?: ($room->propertyType?->name ?? 'Property')) }}
+            </span>
+            @if($room->listing_type === 'broker')
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                    <i class="fas fa-certificate text-indigo-500 text-[9px]"></i> Verified Agent
+                </span>
+            @else
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
+                    <i class="fas fa-shield-check text-emerald-500 text-[9px]"></i> Direct Owner (0%)
+                </span>
+            @endif
+        </div>
+
         <!-- Title & Location -->
         <div class="mb-3">
-            <h2 class="font-black text-base text-slate-900 leading-tight line-clamp-2 mb-1.5">
-                <a href="{{ route('rooms.show', $room->id) }}" class="transition-colors" style="color: var(--primary);">{{ $room->title }}</a>
+            <h2 class="font-extrabold text-base text-slate-900 leading-snug line-clamp-1 mb-1">
+                <a href="{{ route('rooms.show', $room->id) }}" class="hover:text-indigo-600 transition-colors">{{ $room->title }}</a>
             </h2>
             <div class="flex items-center justify-between text-slate-500 text-xs font-medium">
-                <div class="flex items-center">
-                    <i class="fas fa-location-dot mr-1.5 text-[10px]" style="color: var(--primary);"></i>
-                    <span class="truncate">{{ $room->city }}</span>
+                <div class="flex items-center min-w-0">
+                    <i class="fas fa-location-dot mr-1.5 text-rose-500 text-xs shrink-0"></i>
+                    <span class="truncate">{{ $room->landmarks[0] ?? ($room->address ?? $room->city) }}, {{ $room->city }}</span>
                 </div>
                 @if($room->listing_type === 'broker' && $room->user)
-                    <a href="{{ route('agency.show', $room->user) }}" class="text-[11px] font-extrabold text-indigo-600 hover:underline flex items-center gap-1">
-                        <i class="fas fa-building text-[10px]"></i>
-                        <span class="truncate max-w-[130px]">{{ $room->user->agency_name ?: $room->user->name }}</span>
-                    </a>
+                    <span class="text-[11px] font-semibold text-indigo-600 shrink-0 ml-2">
+                        {{ $room->user->agency_name ?: $room->user->name }}
+                    </span>
                 @endif
             </div>
         </div>
 
-        <!-- Property Tags -->
-        <div class="flex flex-wrap gap-1.5 mb-3">
-            @if($room->propertyType?->name)
-                <span class="bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
-                    {{ $room->propertyType->name }}
-                </span>
-            @endif
-            @if($room->propertyCategory?->name)
-                <span class="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg" style="background: rgba(var(--primary-rgb), 0.08); color: var(--primary);">
-                    {{ $room->propertyCategory->name }}
-                </span>
-            @endif
-        </div>
-
-        <!-- Amenities Row -->
-        <div class="flex gap-2 mb-4 overflow-x-auto hide-scrollbar">
-            <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 whitespace-nowrap">
-                <i class="fas fa-couch text-[9px]" style="color: var(--primary);"></i>
-                <span class="text-[10px] font-bold text-slate-600 uppercase">{{ $room->furnishingTypeLabel() }}</span>
+        <!-- Quick Specs Row -->
+        <div class="grid grid-cols-3 gap-1.5 py-2 px-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs mb-3 text-slate-600">
+            <div class="flex items-center gap-1 min-w-0">
+                <i class="{{ $room->isPlot() ? 'fas fa-compass' : 'fas fa-couch' }} text-slate-400 text-xs shrink-0"></i>
+                <span class="truncate font-semibold text-[11px]">{{ $room->isPlot() ? ($room->feature('facing') ? $room->feature('facing') . ' Face' : 'Open') : $room->furnishingTypeLabel() }}</span>
             </div>
-            <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 whitespace-nowrap">
-                <i class="fas fa-users text-[9px]" style="color: var(--primary);"></i>
-                <span class="text-[10px] font-bold text-slate-600 uppercase">{{ $room->tenantTypeLabel() }}</span>
+            <div class="flex items-center gap-1 min-w-0">
+                <i class="{{ $room->isForSell() ? 'fas fa-clock' : 'fas fa-users' }} text-slate-400 text-xs shrink-0"></i>
+                <span class="truncate font-semibold text-[11px]">{{ $room->isForSell() ? $room->possessionLabel() : $room->tenantTypeLabel() }}</span>
             </div>
-            @if($room->area_sqft)
-            <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 whitespace-nowrap">
-                <i class="fas fa-ruler-combined text-[9px]" style="color: var(--primary);"></i>
-                <span class="text-[10px] font-bold text-slate-600 uppercase">{{ number_format((float)$room->area_sqft, 2) }} sqft</span>
+            <div class="flex items-center gap-1 min-w-0 justify-end">
+                <i class="fas fa-ruler-combined text-slate-400 text-xs shrink-0"></i>
+                <span class="truncate font-bold text-[11px] text-slate-800">{{ $room->area_sqft ? number_format((float)$room->area_sqft) . ' sqft' : 'On call' }}</span>
             </div>
-            @endif
         </div>
 
         <!-- Price & Action -->

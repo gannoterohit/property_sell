@@ -5,12 +5,243 @@
     .custom-shadow {
         box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
     }
-    .filter-sticky {
-        position: sticky;
-        top: 80px;
-        max-height: calc(100vh - 100px);
-        overflow-y: auto;
+
+    /* ==========================================================================
+       DESKTOP FULL-PANE APP LAYOUT (Static Navbar & Search Bar, Solid Left Sidebar Pane,
+       Independent Scrollable Rooms Column, and Beautiful Enclosed Footer Card)
+       ========================================================================== */
+    @media (min-width: 1024px) {
+        html:has(body.rooms-listing-page),
+        body.rooms-listing-page {
+            height: 100vh !important;
+            max-height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        body.rooms-listing-page {
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Navbar stays static at top */
+        body.rooms-listing-page > nav,
+        body.rooms-listing-page .site-navbar {
+            flex-shrink: 0 !important;
+            position: relative !important;
+            top: 0 !important;
+            z-index: 50 !important;
+        }
+
+        /* Main fills exact remaining viewport height */
+        body.rooms-listing-page > main {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            padding-top: 0 !important;
+        }
+
+        /* Top Search / Filter Shell sits right under Navbar and stays static */
+        body.rooms-listing-page .rooms-search-shell {
+            flex-shrink: 0 !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 0.5rem 1.5rem !important;
+            box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04) !important;
+            z-index: 40 !important;
+            position: relative !important;
+        }
+
+        body.rooms-listing-page .rooms-search-panel {
+            border-radius: 0.875rem !important;
+            padding: 0.5rem 1rem !important;
+            max-width: 100% !important;
+        }
+
+        /* Main viewport fills remaining space down to bottom of screen */
+        body.rooms-listing-page .rooms-main {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            background: #f8fafc !important;
+            padding: 0 !important;
+        }
+
+        /* Desktop app flex container */
+        body.rooms-listing-page .rooms-desktop-app {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        /* Left Sidebar: Solid full-height white pane (NO empty gray void) */
+        body.rooms-listing-page .rooms-desktop-sidebar {
+            width: 280px !important;
+            flex-shrink: 0 !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            background: #ffffff !important;
+            border-right: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            box-shadow: 2px 0 10px -3px rgba(0, 0, 0, 0.04) !important;
+            z-index: 20 !important;
+        }
+        @media (min-width: 1440px) {
+            body.rooms-listing-page .rooms-desktop-sidebar {
+                width: 290px !important;
+            }
+        }
+        @media (min-width: 1680px) {
+            body.rooms-listing-page .rooms-desktop-sidebar {
+                width: 310px !important;
+            }
+        }
+
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-panel {
+            height: 100% !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-header {
+            padding: 1rem 1.25rem !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            flex-shrink: 0 !important;
+        }
+
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-scroll {
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overscroll-behavior: contain !important;
+            padding: 1rem 1.15rem !important;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        body.rooms-listing-page .rooms-desktop-sidebar .rooms-filter-actions {
+            padding: 0.875rem 1.15rem !important;
+            border-top: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            margin: 0 !important;
+        }
+
+        /* Right column: ONLY THIS SCROLLS! */
+        body.rooms-listing-page .rooms-desktop-content {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overscroll-behavior: contain !important;
+            padding: 1.15rem 1.5rem 3rem 1.5rem !important;
+            scroll-behavior: smooth !important;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        /* 5-Cards per row responsive grid */
+        .rooms-card-col {
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (min-width: 600px) {
+            .rooms-card-col {
+                width: 50% !important;
+            }
+        }
+        @media (min-width: 860px) {
+            .rooms-card-col {
+                width: 33.333333% !important;
+            }
+        }
+        @media (min-width: 1080px) and (max-width: 1219px) {
+            .rooms-card-col {
+                width: 25% !important;
+            }
+        }
+        @media (min-width: 1220px) {
+            .rooms-card-col {
+                width: 20% !important; /* 5 cards per row on desktops */
+            }
+        }
+
+        body.rooms-listing-page .rooms-desktop-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        body.rooms-listing-page .rooms-desktop-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        body.rooms-listing-page .rooms-desktop-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        body.rooms-listing-page .rooms-desktop-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Enclosed Dark Footer Card */
+        body.rooms-listing-page .rooms-desktop-footer-card {
+            margin-top: 3rem !important;
+            margin-bottom: 2rem !important;
+            border-radius: 1.5rem !important;
+            overflow: hidden !important;
+            background: #0f172a !important;
+            box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.15) !important;
+            border: 1px solid #1e293b !important;
+        }
+
+        body.rooms-listing-page .rooms-desktop-footer-card footer {
+            background: transparent !important;
+            padding-top: 2.5rem !important;
+            padding-bottom: 2rem !important;
+        }
+
+        body.rooms-listing-page .rooms-desktop-footer-card footer .container {
+            max-width: 100% !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }
+
+        /* Hide redundant outside footer on desktop */
+        body.rooms-listing-page > footer {
+            display: none !important;
+        }
     }
+
     .rooms-filter-form {
         padding-bottom: 74px;
     }
@@ -44,19 +275,9 @@
         background: rgba(255, 255, 255, .96);
         backdrop-filter: blur(10px);
     }
-    /* Scrollbar styling for sidebar */
-    .filter-sticky {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(var(--primary-rgb), .35) transparent;
-    }
-    .filter-sticky::-webkit-scrollbar { width: 4px; }
-    .filter-sticky::-webkit-scrollbar-track { background: transparent; }
-    .filter-sticky::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), .35); border-radius: 999px; }
-    .filter-sticky::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary-rgb), .58); }
-
     .rooms-search-shell {
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-        padding: 1rem 0;
+        background: #ffffff;
+        padding: 0.75rem 0;
     }
     .rooms-search-panel {
         border-radius: 1.125rem;
@@ -177,29 +398,15 @@
         .room-listing-card, .room-listing-card img { transition: none !important; }
         .room-listing-card:hover { transform: none !important; }
     }
-    /* Reference-led rooms directory */
-    .rooms-search-shell{padding:1.5rem 0;background:#f8fafc}
-    .rooms-search-panel{padding:1.15rem 1.25rem!important;border-radius:1rem;box-shadow:0 12px 34px rgba(15,23,42,.07)}
-    .rooms-search-panel form{gap:1rem!important;flex-wrap:nowrap!important}
-    .rooms-search-panel form>div{min-width:0!important;border-right:0!important;padding-right:0!important}
-    .rooms-search-panel form>div:last-child{width:160px!important;min-width:160px!important}
-    .rooms-search-panel label{color:#64748b!important;font-size:.65rem!important;letter-spacing:.04em!important;text-transform:none!important}
-    .rooms-search-panel input,.rooms-search-panel select{height:46px;border-radius:.65rem!important;background:#fff!important}
-    .rooms-search-panel button[type="submit"]{height:46px;border-radius:.65rem!important}
-    .rooms-main{background:linear-gradient(180deg,#f8fafc 0%,#fff 100%)}
-    .rooms-main>.container{padding-top:1.4rem!important;padding-bottom:3rem!important}
-    .rooms-filter-panel{padding:1.25rem!important;border-radius:1rem!important;box-shadow:0 8px 25px rgba(15,23,42,.05)}
-    .rooms-filter-panel h3{font-size:1.1rem!important}
-    .rooms-filter-panel form{font-size:.78rem}
-    .rooms-filter-panel input[type="text"],.rooms-filter-panel input[type="number"],.rooms-filter-panel input[type="date"],.rooms-filter-panel select{min-height:40px;border-radius:.6rem!important}
+    /* Reference-led rooms directory card and header refinements */
     .rooms-results-head{padding:.25rem 0 1rem;border:0;background:transparent;box-shadow:none}
     .rooms-results-head h2{font-size:1.65rem!important}
     .rooms-results-head h2+span{display:block;margin-top:.25rem;color:var(--primary)}
-    .room-listing-card{border-radius:.9rem!important;box-shadow:0 8px 24px rgba(15,23,42,.07)}
-    .room-listing-card:hover{transform:translateY(-5px)!important;box-shadow:0 20px 42px rgba(15,23,42,.13)}
-    .room-listing-card .room-image{height:14.5rem}
-    .room-listing-card .room-card-body{padding:1rem}
-    .room-listing-card h3{min-height:2.7rem;font-size:1rem;color:var(--primary)}
+    .room-listing-card{border-radius:1rem!important;box-shadow:0 4px 20px -2px rgba(15,23,42,.06);border:1px solid #e2e8f0;background:#fff;transition:all .3s cubic-bezier(0.16, 1, 0.3, 1)}
+    .room-listing-card:hover{transform:translateY(-4px)!important;box-shadow:0 20px 30px -10px rgba(15,23,42,.12);border-color:#cbd5e1}
+    .room-listing-card .room-image{height:13.5rem}
+    .room-listing-card .room-card-body{padding:1.15rem}
+    .room-listing-card h3{min-height:auto;font-size:.95rem;color:#0f172a}
     .room-price-tag{display:inline-flex;align-items:baseline;gap:.2rem;border:1px solid rgba(var(--primary-rgb),.2);background:#fff;color:var(--primary);box-shadow:0 8px 18px rgba(15,23,42,.13)}
     .room-price-tag span:last-child{color:#64748b}
     .room-theme-type-badge{color:var(--primary)}

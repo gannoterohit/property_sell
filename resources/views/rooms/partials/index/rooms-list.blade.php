@@ -1,173 +1,183 @@
             <!-- Rooms list -->
             <div id="rooms-list-container">
                 @if($rooms->count() > 0)
-                <!-- Desktop Columns Grid (Flexbox wrapper for guaranteed column layout) -->
-                <div class="hidden md:flex flex-wrap -mx-2.5">
+                <!-- Desktop Columns Grid (Flexbox wrapper for 5-column desktop layout) -->
+                <div class="hidden md:flex flex-wrap -mx-1.5 lg:-mx-2">
                     @foreach($rooms as $room)
-                        <div class="w-full md:w-1/2 xl:w-1/3 px-2.5 mb-5 flex flex-col">
-                            <div class="room-listing-card group bg-white rounded-2xl border transition-all duration-300 overflow-hidden flex flex-col h-full hover:-translate-y-1">
+                        <div class="rooms-card-col px-1.5 lg:px-2 mb-4 flex flex-col">
+                            <div class="room-listing-card group bg-white rounded-2xl border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full hover:-translate-y-1">
                                 <!-- Image Area -->
-                                <a href="{{ route('rooms.show', $room->id) }}" class="room-image relative block overflow-hidden bg-slate-100">
-                                     @if($room->photo_url)
-                                          <img src="{{ $room->photo_url }}" alt="{{ $room->title }}" width="400" height="300" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='{{ asset('assets/images/default-room.svg') }}'">
-                                     @else
+                                <a href="{{ route('rooms.show', $room->id) }}" class="room-image relative block overflow-hidden bg-slate-100 aspect-[16/10]">
+                                    @if($room->photo_url)
+                                        <img src="{{ $room->photo_url }}" alt="{{ $room->title }}" width="400" height="260" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='{{ asset('assets/images/default-room.svg') }}'">
+                                    @else
                                         <div class="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-300">
-                                            <i class="fas fa-image text-3xl mb-1"></i>
+                                            <i class="fas fa-image text-2xl mb-1"></i>
                                             <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">No Image</span>
                                         </div>
                                     @endif
 
-                                    <!-- Status Badges -->
-                                    <div class="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-                                         @if($room->is_featured)
-                                             <span class="bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">Featured</span>
-                                         @endif
-                                         {{-- Purpose Badge: FOR RENT / FOR SALE --}}
-                                         @if($room->isForSell())
-                                             <span class="bg-purple-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                 <i class="fas fa-tag"></i> For Sale
-                                             </span>
-                                         @else
-                                             <span class="bg-emerald-500 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                 <i class="fas fa-key"></i> For Rent
-                                             </span>
-                                         @endif
-                                         <span class="room-theme-type-badge bg-white/90 backdrop-blur-sm text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-lg border border-white/40 shadow-sm">
-                                             {{ $room->roomTypeLabel() }}
-                                         </span>
-                                         @if($room->propertyType?->name)
-                                             <span class="bg-slate-900 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                                                 {{ $room->propertyType->name }}
-                                             </span>
-                                         @endif
-                                         @if($room->propertyCategory?->name)
-                                             <span class="bg-indigo-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                                                 {{ $room->propertyCategory->name }}
-                                             </span>
-                                         @endif
-                                         @if($room->listing_type === 'broker')
-                                             <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[8.5px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-md">
-                                                 <i class="fas fa-building"></i> Verified Agency
-                                             </span>
-                                         @else
-                                             <span class="bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
-                                                 <i class="fas fa-shield-check"></i> Direct Owner (0%)
-                                             </span>
-                                         @endif
-                                     </div>
-
-                                    <!-- Compare button -->
-                                    <button type="button" 
-                                            data-compare-id="{{ $room->id }}"
-                                            data-compare-title="{{ $room->title }}"
-                                            data-compare-rent="{{ $room->isForSell() ? (float)$room->price : (float)$room->rent }}"
-                                            data-compare-image="{{ $room->photo_url ?: asset('assets/images/default-room.svg') }}"
-                                            data-compare-url="{{ route('rooms.show', $room->slug ?: $room->id) }}"
-                                            onclick="handleCompareClick(this, event)"
-                                            title="Compare this property"
-                                            class="compare-btn-wrapper absolute top-2.5 right-12 h-8 px-2 rounded-xl bg-white/95 backdrop-blur-sm shadow-md text-slate-500 hover:text-indigo-600 active:scale-90 transition-all flex items-center justify-center gap-1 text-[11px] font-bold border border-slate-100 cursor-pointer">
-                                        <i class="fas fa-code-compare text-xs"></i>
-                                        <span class="hidden sm:inline">Compare</span>
-                                    </button>
-
-                                    <!-- Wishlist heart -->
-                                    <button onclick="toggleWishlist(event, {{ $room->id }})" id="wishlist-btn-{{ $room->id }}"
-                                            class="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl bg-white/95 backdrop-blur-sm shadow-md text-slate-400 hover:text-red-500 active:scale-90 transition-all flex items-center justify-center">
-                                        <i class="{{ (Auth::check() && in_array($room->id, $userWishlistIds)) ? 'fas text-red-500' : 'far' }} fa-heart text-sm"></i>
-                                    </button>
-
-                                    <!-- Price tag overlay -->
-                                    <div class="absolute bottom-2.5 left-2.5">
-                                        <div class="room-price-tag px-3 py-1 rounded-xl">
-                                            @if($room->isForSell())
-                                                <span class="text-sm font-black">{{ $room->displayPrice() }}</span>
-                                                <span class="text-[8px] font-bold">sale</span>
-                                            @else
-                                                <span class="text-sm font-black">₹{{ number_format($room->rent) }}</span>
-                                                <span class="text-[8px] font-bold">/mo</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </a>
-
-                                <!-- Card content -->
-                                <div class="room-card-body flex flex-col flex-grow">
-                                    <h3 class="font-bold text-sm text-slate-900 line-clamp-2 mb-2 transition-colors">
-                                        <a href="{{ route('rooms.show', $room->id) }}">{{ $room->title }}</a>
-                                    </h3>
-
-                                    <div class="flex items-center text-slate-500 text-xs mb-3">
-                                        <i class="room-theme-primary-icon fas fa-location-dot mr-1.5"></i>
-                                        <span>{{ $room->city }}</span>
-                                        <div class="distance-tag hidden ml-2 flex items-center gap-1" data-lat="{{ $room->latitude }}" data-lng="{{ $room->longitude }}">
-                                            <div class="room-theme-secondary-dot w-1 h-1 rounded-full"></div>
-                                            <span class="room-theme-secondary-text text-[9px] font-extrabold uppercase tracking-widest"><span class="distance-km">0</span> km</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Quick Specs -->
-                                    <div class="flex flex-wrap gap-1.5 mb-4 mt-auto">
-                                        <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                            <i class="room-theme-primary-icon fas fa-couch"></i> {{ $room->furnishingTypeLabel() }}
-                                        </span>
+                                    <!-- Minimal Top-Left Badges: Only Purpose & Featured -->
+                                    <div class="absolute top-2.5 left-2.5 flex items-center gap-1 z-10">
                                         @if($room->isForSell())
-                                            @if($room->possession_status)
-                                                <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                    <i class="room-theme-primary-icon fas fa-home"></i> {{ $room->possessionLabel() }}
-                                                </span>
-                                            @endif
+                                            <span class="inline-flex items-center gap-1 bg-violet-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm backdrop-blur-md">
+                                                <i class="fas fa-tag text-[8px]"></i> Sale
+                                            </span>
                                         @else
-                                            @if($room->tenantTypeLabel() !== 'N/A')
-                                                <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                    <i class="room-theme-primary-icon fas fa-users"></i> {{ $room->tenantTypeLabel() }}
-                                                </span>
-                                            @endif
+                                            <span class="inline-flex items-center gap-1 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm backdrop-blur-md">
+                                                <i class="fas fa-key text-[8px]"></i> Rent
+                                            </span>
                                         @endif
-                                        @if($room->area_sqft)
-                                            <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                                <i class="room-theme-primary-icon fas fa-ruler-combined"></i> {{ number_format((float)$room->area_sqft, 2) }} sqft
+                                        @if($room->is_featured)
+                                            <span class="inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md shadow-sm">
+                                                <i class="fas fa-star text-[8px]"></i> Featured
                                             </span>
                                         @endif
                                     </div>
 
-                                    <div class="room-owner-row">
-                                        @if($room->user?->avatar)<img src="{{ asset('storage/'.$room->user->avatar) }}" alt="{{ $room->user?->name ?? 'Property Lister' }}" loading="lazy">@else<div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"><i class="fas fa-user" aria-hidden="true"></i><span class="sr-only">Property lister</span></div>@endif
+                                    <!-- Quick Actions (Top Right) -->
+                                    <div class="absolute top-2.5 right-2.5 flex items-center gap-1 z-10">
+                                        <button type="button" 
+                                                data-compare-id="{{ $room->id }}"
+                                                data-compare-title="{{ $room->title }}"
+                                                data-compare-rent="{{ $room->isForSell() ? (float)$room->price : (float)$room->rent }}"
+                                                data-compare-image="{{ $room->photo_url ?: asset('assets/images/default-room.svg') }}"
+                                                data-compare-url="{{ route('rooms.show', $room->slug ?: $room->id) }}"
+                                                onclick="handleCompareClick(this, event)"
+                                                title="Compare this property"
+                                                class="w-7 h-7 rounded-full bg-white/95 hover:bg-white text-slate-500 hover:text-indigo-600 shadow-md backdrop-blur-md flex items-center justify-center text-[10px] transition-all active:scale-90 border border-white/60 cursor-pointer">
+                                            <i class="fas fa-code-compare"></i>
+                                        </button>
+                                        <button type="button" 
+                                                onclick="toggleWishlist(event, {{ $room->id }})" 
+                                                id="wishlist-btn-{{ $room->id }}"
+                                                title="Save property"
+                                                class="w-7 h-7 rounded-full bg-white/95 hover:bg-white text-slate-400 hover:text-rose-500 shadow-md backdrop-blur-md flex items-center justify-center text-[10px] transition-all active:scale-90 border border-white/60 cursor-pointer">
+                                            <i class="{{ (Auth::check() && in_array($room->id, $userWishlistIds)) ? 'fas text-rose-500' : 'far' }} fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </a>
+
+                                <!-- Card content (Everything cleanly organized below the image) -->
+                                <div class="room-card-body p-3 flex flex-col flex-grow">
+                                    <!-- Meta Tag Row: Property Type & Lister Type -->
+                                    <div class="flex items-center justify-between gap-1 mb-1.5">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 truncate max-w-[58%]">
+                                            <i class="fas fa-building text-[9px] text-slate-400 shrink-0"></i>
+                                            <span class="truncate">{{ $room->roomTypeLabel() ?: ($room->propertyCategory?->name ?: ($room->propertyType?->name ?? 'Property')) }}</span>
+                                        </span>
+
                                         @if($room->listing_type === 'broker')
-                                            <span>Agent: @if($room->user)<a href="{{ route('agency.show', $room->user) }}" class="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1">{{ $room->user->agency_name ?: ($room->user->name ?? 'Verified Agent') }} <i class="fas fa-arrow-up-right-from-square text-[9px]"></i></a>@else<strong>Verified Agent</strong>@endif</span>
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded-md shrink-0">
+                                                <i class="fas fa-certificate text-indigo-500 text-[8px]"></i> Agent
+                                            </span>
                                         @else
-                                            <span>Owner: <strong>{{ $room->user?->name ?? 'Verified Owner' }}</strong></span>
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md shrink-0">
+                                                <i class="fas fa-shield-check text-emerald-500 text-[8px]"></i> Owner (0%)
+                                            </span>
                                         @endif
                                     </div>
 
-                                    <!-- Bottom actions -->
-                                    @auth
-                                        @php
-                                            $isMyRoom = Auth::id() === $room->user_id || (Auth::user()->role === 'broker' && Auth::id() === $room->broker_id);
-                                            $editRoute = Auth::user()->role === 'broker' ? route('agent.rooms.edit', $room) : (Auth::user()->role === 'owner' ? route('owner.rooms.edit', $room) : null);
-                                            $destroyRoute = Auth::user()->role === 'broker' ? route('agent.rooms.destroy', $room) : (Auth::user()->role === 'owner' ? route('owner.rooms.destroy', $room) : null);
-                                        @endphp
-                                        @if($isMyRoom && $editRoute)
-                                            <div class="grid grid-cols-2 gap-2 mt-auto">
-                                                <a href="{{ $editRoute }}" class="flex items-center justify-center bg-amber-50 text-amber-700 font-extrabold py-2 rounded-xl hover:bg-amber-100 transition-colors text-xs">
-                                                    <i class="fas fa-edit mr-1"></i> Edit
-                                                </a>
-                                                <form action="{{ $destroyRoute }}" method="POST" class="delete-room-form">
-                                                    @csrf @method('DELETE')
-                                                    <button type="submit" class="w-full flex items-center justify-center bg-red-50 text-red-600 font-extrabold py-2 rounded-xl hover:bg-red-100 transition-colors text-xs">
-                                                        <i class="fas fa-trash mr-1"></i> Delete
-                                                    </button>
-                                                </form>
+                                    <!-- Price & Negotiation -->
+                                    <div class="flex items-baseline justify-between gap-1.5 mb-1">
+                                        @if($room->isForSell())
+                                            <div class="flex items-baseline gap-1 min-w-0">
+                                                <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">{{ $room->displayPrice() }}</span>
+                                                @if($room->ratePerSqft())
+                                                    <span class="text-[10px] font-semibold text-slate-400 truncate">₹{{ number_format($room->ratePerSqft()) }}/sqft</span>
+                                                @endif
                                             </div>
+                                            @if($room->feature('price_negotiable'))
+                                                <span class="shrink-0 text-[9px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">Neg</span>
+                                            @endif
                                         @else
-                                            <a href="{{ route('rooms.show', $room->id) }}" class="room-theme-primary-button w-full py-2 font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center gap-1 text-xs mt-auto">
-                                                {{ $room->isForSell() ? 'Contact Seller' : ($room->listing_type === 'broker' ? 'Contact Agent' : 'Contact Owner') }} <i class="fas fa-arrow-right text-[10px]"></i>
-                                            </a>
+                                            <div class="flex items-baseline gap-1 min-w-0">
+                                                <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">₹{{ number_format($room->rent) }}</span>
+                                                <span class="text-[10px] font-semibold text-slate-400">/mo</span>
+                                            </div>
+                                            @if($room->deposit)
+                                                <span class="shrink-0 text-[10px] font-medium text-slate-400 truncate">Dep: ₹{{ number_format($room->deposit) }}</span>
+                                            @endif
                                         @endif
-                                    @else
-                                        <a href="{{ route('rooms.show', $room->id) }}" class="room-theme-primary-button w-full py-2 font-extrabold rounded-xl transition-all shadow-md flex items-center justify-center gap-1 text-xs mt-auto">
-                                            {{ $room->isForSell() ? 'Contact Seller' : 'Contact Owner' }} <i class="fas fa-arrow-right text-[10px]"></i>
-                                        </a>
-                                    @endauth
+                                    </div>
+
+                                    <!-- Property Title -->
+                                    <h3 class="font-bold text-xs sm:text-[13px] text-slate-800 hover:text-indigo-600 line-clamp-1 mb-1 transition-colors leading-snug">
+                                        <a href="{{ route('rooms.show', $room->id) }}">{{ $room->title }}</a>
+                                    </h3>
+
+                                    <!-- Location & Distance -->
+                                    <div class="flex items-center text-slate-500 text-[11px] mb-2 min-w-0">
+                                        <i class="fas fa-location-dot text-rose-500 mr-1 text-[10px] shrink-0"></i>
+                                        <span class="truncate">{{ $room->landmarks[0] ?? ($room->address ?? $room->city) }}, {{ $room->city }}</span>
+                                        <div class="distance-tag hidden ml-auto shrink-0 flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 px-1 py-0.5 rounded" data-lat="{{ $room->latitude }}" data-lng="{{ $room->longitude }}">
+                                            <i class="fas fa-person-walking text-slate-400"></i>
+                                            <span class="distance-km">0</span> km
+                                        </div>
+                                    </div>
+
+                                    <!-- Specifications Strip (3-column neat grid) -->
+                                    <div class="grid grid-cols-3 gap-1 py-1.5 px-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] mb-2.5 text-slate-600">
+                                        <div class="flex items-center gap-1 min-w-0" title="Furnishing">
+                                            <i class="{{ $room->isPlot() ? 'fas fa-compass' : 'fas fa-couch' }} text-slate-400 text-[10px] shrink-0"></i>
+                                            <span class="truncate font-semibold">{{ $room->isPlot() ? ($room->feature('facing') ? $room->feature('facing') . ' Face' : 'Open') : $room->furnishingTypeLabel() }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1 min-w-0" title="{{ $room->isForSell() ? 'Possession' : 'Preferred Tenant' }}">
+                                            <i class="{{ $room->isForSell() ? 'fas fa-clock' : 'fas fa-users' }} text-slate-400 text-[10px] shrink-0"></i>
+                                            <span class="truncate font-semibold">{{ $room->isForSell() ? $room->possessionLabel() : $room->tenantTypeLabel() }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1 min-w-0 justify-end" title="Area">
+                                            <i class="fas fa-ruler-combined text-slate-400 text-[10px] shrink-0"></i>
+                                            <span class="truncate font-bold text-slate-800">{{ $room->area_sqft ? number_format((float)$room->area_sqft) . ' sqft' : 'On call' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Footer: Lister Info & Action Button -->
+                                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            @if($room->user?->avatar)
+                                                <img src="{{ asset('storage/'.$room->user->avatar) }}" alt="{{ $room->user?->name }}" class="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0">
+                                            @else
+                                                <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-extrabold flex items-center justify-center text-[10px] shrink-0 border border-slate-200">
+                                                    {{ strtoupper(substr($room->user?->name ?? 'O', 0, 1)) }}
+                                                </div>
+                                            @endif
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] font-bold text-slate-800 truncate leading-tight">
+                                                    @if($room->listing_type === 'broker' && $room->user)
+                                                        {{ $room->user->agency_name ?: $room->user->name }}
+                                                    @else
+                                                        {{ $room->user?->name ?? 'Direct Owner' }}
+                                                    @endif
+                                                </p>
+                                                <p class="text-[9px] text-slate-400 font-medium leading-none">
+                                                    {{ $room->listing_type === 'broker' ? 'Agent' : 'Owner' }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        @auth
+                                            @php
+                                                $isMyRoom = Auth::id() === $room->user_id || (Auth::user()->role === 'broker' && Auth::id() === $room->broker_id);
+                                                $editRoute = Auth::user()->role === 'broker' ? route('agent.rooms.edit', $room) : (Auth::user()->role === 'owner' ? route('owner.rooms.edit', $room) : null);
+                                            @endphp
+                                            @if($isMyRoom && $editRoute)
+                                                <a href="{{ $editRoute }}" class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors shrink-0">
+                                                    <i class="fas fa-edit text-[9px]"></i> Edit
+                                                </a>
+                                            @else
+                                                <a href="{{ route('rooms.show', $room->id) }}" class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-white bg-slate-900 hover:bg-indigo-600 transition-colors shadow-2xs shrink-0">
+                                                    <span>{{ $room->isForSell() ? 'Deal' : 'Details' }}</span>
+                                                    <i class="fas fa-arrow-right text-[9px]"></i>
+                                                </a>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('rooms.show', $room->id) }}" class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-white bg-slate-900 hover:bg-indigo-600 transition-colors shadow-2xs shrink-0">
+                                                <span>{{ $room->isForSell() ? 'Deal' : 'Details' }}</span>
+                                                <i class="fas fa-arrow-right text-[9px]"></i>
+                                            </a>
+                                        @endauth
+                                    </div>
                                 </div>
                             </div>
                         </div>

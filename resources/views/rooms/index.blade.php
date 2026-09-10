@@ -21,44 +21,68 @@
 
 <!-- ===== MAIN CONTAINER ===== -->
 <div class="rooms-main">
-<div class="container mx-auto px-4 sm:px-6 py-6">
-    @if($cityContext['isFallback'])
-        <div class="city-fallback-banner mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <strong class="block text-sm">Launching soon in {{ $cityContext['launchingSoonCityName'] }}</strong>
-                <span class="text-xs">We're currently active in {{ $cityContext['activeCityName'] }}. Showing verified {{ $cityContext['activeCityName'] }} properties for now.</span>
-            </div>
-            <a href="{{ route('rooms.index', ['city' => $cityContext['activeCityName']]) }}" class="rooms-theme-link text-xs font-black">View {{ $cityContext['activeCityName'] }}</a>
-        </div>
-    @endif
-
-    <!-- Breadcrumb -->
-    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-4 font-semibold">
-        <a href="{{ url('/') }}" class="rooms-breadcrumb-link transition-colors">Home</a>
-        <i class="fas fa-chevron-right text-[8px]"></i>
-        <span class="text-slate-600">Rooms in {{ $displayCity ?? 'India' }}</span>
-    </div>
-
-    <!-- ===== DESKTOP / TABLET LAYOUT ===== -->
-    <div class="hidden md:block">
-        <!-- Outer container (Flexbox for robust layout) -->
-        <div class="flex flex-col lg:flex-row gap-6 xl:gap-7 items-start">
-
+    <!-- ===== DESKTOP APP LAYOUT (FIXED SIDEBAR, ONLY ROOMS SCROLL) ===== -->
+    <div class="rooms-desktop-app hidden lg:flex">
+        <!-- Solid Left Sidebar Pane (Full Height) -->
+        <aside class="rooms-desktop-sidebar">
             @include('rooms.partials.index.filter-sidebar')
+        </aside>
 
-            <!-- ===== RIGHT COLUMN (ROOMS GRID) ===== -->
-            <div class="flex-grow min-w-0">
-                @include('rooms.partials.index.results-header')
+        <!-- Scrollable Rooms Content Pane -->
+        <div class="rooms-desktop-content" id="roomsDesktopScroll">
+            @if($cityContext['isFallback'])
+                <div class="city-fallback-banner mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <strong class="block text-sm">Launching soon in {{ $cityContext['launchingSoonCityName'] }}</strong>
+                        <span class="text-xs">We're currently active in {{ $cityContext['activeCityName'] }}. Showing verified {{ $cityContext['activeCityName'] }} properties for now.</span>
+                    </div>
+                    <a href="{{ route('rooms.index', ['city' => $cityContext['activeCityName']]) }}" class="rooms-theme-link text-xs font-black">View {{ $cityContext['activeCityName'] }}</a>
+                </div>
+            @endif
 
-                @include('rooms.partials.index.rooms-list')
-
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-3.5 font-semibold">
+                <a href="{{ url('/') }}" class="rooms-breadcrumb-link transition-colors">Home</a>
+                <i class="fas fa-chevron-right text-[8px]"></i>
+                <span class="text-slate-600">Rooms in {{ $displayCity ?? 'India' }}</span>
             </div>
 
+            @include('rooms.partials.index.results-header')
+
+            @include('rooms.partials.index.rooms-list')
+
+            <!-- Trust Strip & Recently Viewed inside right scroll pane -->
+            <div class="mt-10 space-y-6">
+                @include('rooms.partials.index.trust-strip')
+                @include('rooms.partials.recently-viewed')
+            </div>
+
+            <!-- Modern Enclosed Footer Card -->
+            <div class="rooms-desktop-footer-card mt-12 mb-8 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+                @include('partials.site-footer')
+            </div>
         </div>
     </div>
 
-    <!-- ===== MOBILE LAYOUT ===== -->
-    <div class="md:hidden">
+    <!-- ===== MOBILE / TABLET LAYOUT ===== -->
+    <div class="lg:hidden container mx-auto px-4 sm:px-6 py-4">
+        @if($cityContext['isFallback'])
+            <div class="city-fallback-banner mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <strong class="block text-sm">Launching soon in {{ $cityContext['launchingSoonCityName'] }}</strong>
+                    <span class="text-xs">We're currently active in {{ $cityContext['activeCityName'] }}. Showing verified {{ $cityContext['activeCityName'] }} properties for now.</span>
+                </div>
+                <a href="{{ route('rooms.index', ['city' => $cityContext['activeCityName']]) }}" class="rooms-theme-link text-xs font-black">View {{ $cityContext['activeCityName'] }}</a>
+            </div>
+        @endif
+
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-4 font-semibold">
+            <a href="{{ url('/') }}" class="rooms-breadcrumb-link transition-colors">Home</a>
+            <i class="fas fa-chevron-right text-[8px]"></i>
+            <span class="text-slate-600">Rooms in {{ $displayCity ?? 'India' }}</span>
+        </div>
+
         <!-- Mobile Search Bar -->
         <div class="px-4 mb-3">
             <form action="{{ route('rooms.index') }}" method="GET" class="relative">
@@ -110,13 +134,13 @@
         </div>
 
         @include('rooms.partials.listing-mobile')
+
+        <div class="mt-6 space-y-6">
+            @include('rooms.partials.index.trust-strip')
+            @include('rooms.partials.recently-viewed')
+        </div>
     </div>
-
 </div>
-</div>
-
-@include('rooms.partials.index.trust-strip')
-@include('rooms.partials.recently-viewed')
 
 @push('scripts')
 <script>

@@ -38,7 +38,7 @@
     
     <!-- Compact Desktop Navigation -->
     <!-- Desktop Navigation (Redesigned) -->
-    <nav class="hidden lg:block bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
+    <nav class="hidden lg:block bg-white border-b border-slate-100 shadow-sm sticky top-0 z-50">
         <div class="desktop-navbar-inner">
             <div class="desktop-navbar-row">
                 <!-- Logo -->
