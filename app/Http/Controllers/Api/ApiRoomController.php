@@ -395,23 +395,25 @@ class ApiRoomController extends BaseApiController
             $room = Room::create($data);
             \Illuminate\Support\Facades\Cache::forget('public_cities_list');
 
-            // Notify admin about new room listing (API side)
+            // 1. Notify Admin with bell notification + email alert (API side)
             try {
-                \App\Models\AdminNotification::send(
-                    'room_posted',
-                    'New Room Listed (App)',
-                    '"' . \Illuminate\Support\Str::limit($room->title, 35) . '" in ' . ($room->city ?: 'Unknown') . ' by ' . (Auth::user()?->name ?? 'Owner'),
-                    route('admin.rooms.show', $room->id),
-                    'fa-building'
-                );
+                \App\Services\NotificationService::notifyAdminNewPropertySubmitted($room);
             } catch (\Throwable $notifEx) {
                 report($notifEx);
             }
 
-            // Notify broker of property submission & check remaining listing credits (API side)
+            // 2. Notify Host (Owner / Broker) of property submission
+            try {
+                if (Auth::check()) {
+                    \App\Services\NotificationService::notifyPropertySubmitted(Auth::user(), $room);
+                }
+            } catch (\Throwable $ex) {
+                report($ex);
+            }
+
+            // 3. For brokers, check remaining listing credits (API side)
             if (Auth::user()?->role === 'broker') {
                 try {
-                    \App\Services\NotificationService::notifyPropertySubmitted(Auth::user(), $room);
                     $creditRecord = \App\Models\BrokerListingCredit::where('broker_id', Auth::id())
                         ->where('credits_remaining', '>', 0)
                         ->where(function ($q) {

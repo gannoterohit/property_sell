@@ -64,10 +64,11 @@ Route::get('/agencies', [\App\Http\Controllers\AgencyController::class, 'index']
 Route::get('/agency/{user}', [\App\Http\Controllers\AgencyController::class, 'show'])->name('agency.show');
 Route::post('/agency/{user}/reviews', [\App\Http\Controllers\AgencyController::class, 'storeReview'])->name('agency.review.store');
 
-// Wishlist routes (accessible to all authenticated users: user, admin, owner, broker)
+// Wishlist & coupon routes (accessible to all authenticated users: user, admin, owner, broker)
 Route::middleware('auth')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/wishlist/toggle/{roomId}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::post('/coupon/apply', [\App\Http\Controllers\CouponController::class, 'apply'])->name('coupon.apply');
 });
 
 // Role-specific route modules

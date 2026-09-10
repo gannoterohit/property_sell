@@ -19,10 +19,6 @@ class BrokerDashboardController extends Controller
         $broker = Auth::user();
         abort_if($broker->role !== 'broker', 403);
 
-        if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
-
         $stats = [
             'total_properties' => Room::where('broker_id', $broker->id)->count(),
             'active_properties' => Room::where('broker_id', $broker->id)->where('status', 'active')->where('listing_status', 'approved')->count(),
@@ -60,9 +56,6 @@ class BrokerDashboardController extends Controller
     public function properties(Request $request)
     {
         $broker = Auth::user();
-                if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
 
         $query = Room::where('broker_id', $broker->id);
 
@@ -93,7 +86,6 @@ class BrokerDashboardController extends Controller
     public function enquiries(Request $request)
     {
         $broker = Auth::user();
-        abort_if(!$broker->is_broker_active, 403);
 
         $query = Enquiry::whereHas('room', function ($q) use ($broker) {
             $q->where('broker_id', $broker->id)
@@ -188,9 +180,6 @@ class BrokerDashboardController extends Controller
     public function payments(Request $request)
     {
         $broker = Auth::user();
-                if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
 
         $payments = BrokerPayment::where('broker_id', $broker->id)->latest()->paginate(20);
 
@@ -200,9 +189,6 @@ class BrokerDashboardController extends Controller
     public function transactions(Request $request)
     {
         $broker = Auth::user();
-                if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
 
         $transactions = BrokerTransaction::where('broker_id', $broker->id)->latest()->paginate(20);
 
@@ -212,9 +198,6 @@ class BrokerDashboardController extends Controller
     public function profile(Request $request)
     {
         $broker = Auth::user();
-                if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
 
         return view('broker.profile.show', compact('broker'));
     }
@@ -222,9 +205,6 @@ class BrokerDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $broker = Auth::user();
-                if (!$broker->is_broker_active) {
-            return redirect()->route('agent.pending');
-        }
 
         $data = $request->validate([
             'name' => 'required|string|max:255',

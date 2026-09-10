@@ -15,9 +15,15 @@
             <h2 class="agent-page-header-title">Your Properties</h2>
             <p class="agent-page-header-sub">Manage your listings, pricing, and availability.</p>
         </div>
-        <a href="{{ route('agent.rooms.create') }}" class="agent-page-header-action">
-            <i class="fas fa-plus"></i> Add Property
-        </a>
+        @if(Auth::user()->is_broker_active)
+            <a href="{{ route('agent.rooms.create') }}" class="agent-page-header-action">
+                <i class="fas fa-plus"></i> Add Property
+            </a>
+        @else
+            <button type="button" onclick="alert('Aapka broker account abhi verification me pending hai. Admin approval milne ke baad hi aap nayi property add kar sakte hain.');" class="agent-page-header-action opacity-60 cursor-not-allowed bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-200 shadow-none" title="Account Pending Approval">
+                <i class="fas fa-lock"></i> Add Property (Locked)
+            </button>
+        @endif
     </div>
 
     {{-- Stat Tiles --}}
@@ -150,9 +156,15 @@
                 <i class="fas fa-house-circle-xmark"></i>
                 <h2>No properties listed yet</h2>
                 <p>Add your first property and start receiving enquiries from clients.</p>
-                <a href="{{ route('agent.rooms.create') }}" class="agent-empty-btn">
-                    <i class="fas fa-plus"></i> Add Your First Property
-                </a>
+                @if(Auth::user()->is_broker_active)
+                    <a href="{{ route('agent.rooms.create') }}" class="agent-empty-btn">
+                        <i class="fas fa-plus"></i> Add Your First Property
+                    </a>
+                @else
+                    <button type="button" onclick="alert('Aapka broker account abhi verification me pending hai. Admin approval ke baad hi aap property create kar sakte hain.');" class="agent-empty-btn opacity-60 cursor-not-allowed bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-200 shadow-none" title="Account Pending Approval">
+                        <i class="fas fa-lock"></i> Add Property (Account Pending Approval)
+                    </button>
+                @endif
             </div>
         @endif
 

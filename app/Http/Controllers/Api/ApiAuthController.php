@@ -308,6 +308,10 @@ class ApiAuthController extends BaseApiController
 
         \App\Services\NotificationService::notifyWelcome($user);
 
+        if ($user->role === 'broker') {
+            \App\Services\NotificationService::notifyAdminNewBrokerRegistered($user);
+        }
+
         $token = $user->createToken('flutter_app')->plainTextToken;
 
         return $this->sendSuccess([

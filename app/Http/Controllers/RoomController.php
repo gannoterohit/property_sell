@@ -550,22 +550,25 @@ class RoomController extends Controller {
                 }
             }
 
+            // 1. Notify Admin with bell notification + email alert
             try {
-                \App\Models\AdminNotification::send(
-                    'room_posted',
-                    'New Room Listed',
-                    '"' . \Illuminate\Support\Str::limit($room->title, 35) . '" in ' . ($room->city ?: 'Unknown') . ' by ' . (Auth::user()?->name ?? 'Owner'),
-                    route('admin.rooms.show', $room->id),
-                    'fa-building'
-                );
+                \App\Services\NotificationService::notifyAdminNewPropertySubmitted($room);
             } catch (\Throwable $e) {
                 report($e);
             }
 
-            // Notify broker of property submission & check remaining listing credits
+            // 2. Notify Host (Owner / Broker) of property submission
+            try {
+                if (Auth::check()) {
+                    \App\Services\NotificationService::notifyPropertySubmitted(Auth::user(), $room);
+                }
+            } catch (\Throwable $ex) {
+                report($ex);
+            }
+
+            // 3. For brokers, check remaining listing credits
             if (Auth::user()?->role === 'broker') {
                 try {
-                    \App\Services\NotificationService::notifyPropertySubmitted(Auth::user(), $room);
                     $creditRecord = \App\Models\BrokerListingCredit::where('broker_id', Auth::id())
                         ->where('credits_remaining', '>', 0)
                         ->where(function ($q) {

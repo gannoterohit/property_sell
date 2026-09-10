@@ -6,6 +6,7 @@ use App\Mail\BrandedMessageMail;
 use App\Models\AdminNotification;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,16 @@ use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
+    /**
+     * Get the authoritative Admin email address for alerts.
+     */
+    public static function getAdminEmail(): string
+    {
+        return env('ADMIN_EMAIL')
+            ?: Setting::get('contact_email')
+            ?: User::where('role', 'admin')->value('email')
+            ?: config('mail.from.address', 'rohitgannote9009@gmail.com');
+    }
     /**
      * Notify Tenant (User) + Admin when room contact details are unlocked.
      */
@@ -194,7 +205,7 @@ class NotificationService
                 }
             }
 
-            // 4. Admin Panel Notification
+            // 4. Admin Panel Notification & Email Alert
             try {
                 AdminNotification::send(
                     'payment_received',
@@ -203,6 +214,27 @@ class NotificationService
                     route('admin.payments.index'),
                     'fa-credit-card'
                 );
+
+                $adminEmail = self::getAdminEmail();
+                if ($adminEmail) {
+                    Mail::to($adminEmail)->send(new BrandedMessageMail(
+                        "Payment Received: {$amountLabel} from {$user->name}",
+                        "New Payment Received Successfully",
+                        "A payment of {$amountLabel} was successfully processed on ApnaNest from {$user->name} ({$user->role}) for {$paymentLabel}.",
+                        "Payment Notification",
+                        "View Payments",
+                        route('admin.payments.index'),
+                        [
+                            'Customer'       => "{$user->name} ({$user->email})",
+                            'Role'           => ucfirst($user->role),
+                            'Amount'         => $amountLabel,
+                            'Payment For'    => $paymentLabel,
+                            'Transaction ID' => $payment->transaction_id ?: $payment->gateway_order_id ?: "PAY-{$payment->id}",
+                            'Date'           => now()->format('d M Y, h:i A'),
+                        ],
+                        'success'
+                    ));
+                }
             } catch (\Exception $adminEx) {
                 Log::warning("Admin notification for payment failed: " . $adminEx->getMessage());
             }
@@ -300,7 +332,7 @@ class NotificationService
                 'fa-headset'
             );
 
-            // Firebase Push
+            // Firebase Push & Email Notification
             $user = User::find($userId);
             if ($user) {
                 FirebaseService::sendToUser(
@@ -310,6 +342,27 @@ class NotificationService
                     ['type' => 'complaint_update', 'ticket' => $ticketNumber],
                     $complaintRoute
                 );
+
+                if ($user->email) {
+                    try {
+                        Mail::to($user->email)->send(new BrandedMessageMail(
+                            "Support Ticket Update: #{$ticketNumber} ({$statusLabel})",
+                            "Support Ticket Status Updated",
+                            "Your support ticket #{$ticketNumber} status on ApnaNest has been updated to {$statusLabel}. You can view the full details and response by clicking below.",
+                            "Support Ticket Update",
+                            "View Ticket Details",
+                            $complaintRoute,
+                            [
+                                'Ticket Number' => "#{$ticketNumber}",
+                                'Status'        => $statusLabel,
+                                'Updated At'    => now()->format('d M Y, h:i A'),
+                            ],
+                            in_array(strtolower($status), ['resolved', 'closed'], true) ? 'success' : 'primary'
+                        ));
+                    } catch (\Exception $mailEx) {
+                        Log::warning("Complaint status email failed: " . $mailEx->getMessage());
+                    }
+                }
             }
 
         } catch (\Exception $e) {
@@ -378,6 +431,110 @@ class NotificationService
             }
         } catch (\Exception $e) {
             Log::error("NotificationService notifyWelcome error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify Admin when a new broker / agent registers and is pending review
+     */
+    public static function notifyAdminNewBrokerRegistered(User $broker): void
+    {
+        try {
+            if (!$broker->isBroker()) return;
+
+            $agency = $broker->agency_name ? " (Agency: {$broker->agency_name})" : "";
+            $contact = $broker->phone ?: ($broker->email ?: 'N/A');
+            $actionUrl = route('admin.brokers.show', $broker->id);
+
+            // 1. Admin In-app notification
+            AdminNotification::send(
+                'new_broker_registration',
+                "New Agent Registered: {$broker->name}",
+                "New broker application received from {$broker->name}{$agency}. Contact: {$contact}. Pending admin verification & approval.",
+                $actionUrl,
+                'fa-user-tie'
+            );
+
+            // 2. Admin Email alert
+            $adminEmail = self::getAdminEmail();
+            if ($adminEmail) {
+                try {
+                    Mail::to($adminEmail)->send(new BrandedMessageMail(
+                        "New Agent Application Pending Review: {$broker->name} 👔",
+                        "New Broker Registration Received",
+                        "A new broker/agent '{$broker->name}' has registered on ApnaNest and is awaiting your verification and account approval.",
+                        "Broker Application",
+                        "Review & Approve Agent",
+                        $actionUrl,
+                        [
+                            'Agent Name'       => $broker->name,
+                            'Email'            => $broker->email ?? 'N/A',
+                            'Phone'            => $broker->phone ?? 'N/A',
+                            'Agency Name'      => $broker->agency_name ?? 'Individual Agent',
+                            'License Number'   => $broker->agency_license_no ?? 'N/A',
+                            'Registration Date'=> now()->format('d M Y, h:i A'),
+                            'Status'           => 'Pending Admin Verification',
+                        ],
+                        'primary',
+                        'You can approve, reject, or request further agency verification from the Broker Management panel.'
+                    ));
+                } catch (\Exception $mailEx) {
+                    Log::warning("Admin new broker email failed: " . $mailEx->getMessage());
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("NotificationService notifyAdminNewBrokerRegistered error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify Admin when a new property listing is submitted and pending review.
+     */
+    public static function notifyAdminNewPropertySubmitted(Room $room): void
+    {
+        try {
+            $host = $room->owner ?? User::find($room->user_id);
+            $hostName = $host ? $host->name : 'User';
+            $roleLabel = $host ? ucfirst($host->role) : 'Owner';
+            $actionUrl = route('admin.rooms.show', $room->id);
+
+            // 1. Admin In-app notification
+            AdminNotification::send(
+                'room_posted',
+                "New Property Listed: {$room->title}",
+                "New property '{$room->title}' submitted in " . ($room->city ?: 'Unknown') . " by {$roleLabel} {$hostName}. Pending verification and approval.",
+                $actionUrl,
+                'fa-building'
+            );
+
+            // 2. Admin Email alert
+            $adminEmail = self::getAdminEmail();
+            if ($adminEmail) {
+                try {
+                    Mail::to($adminEmail)->send(new BrandedMessageMail(
+                        "New Property Pending Review: {$room->title} 🏠",
+                        "New Property Listing Submitted",
+                        "A new property listing '{$room->title}' was submitted by {$roleLabel} '{$hostName}' and is pending your review and approval.",
+                        "Property Review",
+                        "Review Property Listing",
+                        $actionUrl,
+                        [
+                            'Property Title' => $room->title,
+                            'Posted By'      => "{$hostName} ({$roleLabel})",
+                            'City'           => $room->city ?? 'N/A',
+                            'Rent / Price'   => '₹' . number_format($room->rent ?? 0, 2),
+                            'Submitted At'   => now()->format('d M Y, h:i A'),
+                            'Status'         => 'Pending Admin Approval',
+                        ],
+                        'primary',
+                        'Approve or reject this listing from the Admin Room Management panel.'
+                    ));
+                } catch (\Exception $mailEx) {
+                    Log::warning("Admin new property email alert failed: " . $mailEx->getMessage());
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("NotificationService notifyAdminNewPropertySubmitted error: " . $e->getMessage());
         }
     }
 
@@ -611,19 +768,19 @@ class NotificationService
     }
 
     /**
-     * Notify Broker when a property listing is submitted for admin approval.
+     * Notify Owner or Broker when a property listing is submitted for admin approval.
      */
-    public static function notifyPropertySubmitted(User $broker, Room $room): void
+    public static function notifyPropertySubmitted(User $host, Room $room): void
     {
         try {
-            if (!$broker || !$broker->email) return;
+            if (!$host || !$host->email) return;
 
-            $actionUrl = route('agent.dashboard');
+            $actionUrl = ($host->role === 'broker') ? route('agent.properties') : route('owner.rooms.index');
 
             // 1. Bell notification
             try {
                 UserNotification::send(
-                    $broker->id,
+                    $host->id,
                     'property_submitted',
                     "Property Submitted: {$room->title}",
                     "Your listing '{$room->title}' was submitted and is pending admin approval.",
@@ -636,15 +793,15 @@ class NotificationService
 
             // 2. Firebase Push Notification
             FirebaseService::sendToUser(
-                $broker,
+                $host,
                 "Property Submitted 📝",
                 "'{$room->title}' was submitted and is pending admin approval.",
                 ['type' => 'property_submitted', 'room_id' => (string) $room->id],
                 $actionUrl
             );
 
-            // 2. Email Notification
-            Mail::to($broker->email)->send(new BrandedMessageMail(
+            // 3. Email Notification
+            Mail::to($host->email)->send(new BrandedMessageMail(
                 "Property Submitted for Approval: {$room->title} 📝",
                 "Property Listing Submitted Successfully",
                 "Your property listing '{$room->title}' has been received and is currently under review by the ApnaNest verification team. We usually process listings within a few hours.",
@@ -666,57 +823,104 @@ class NotificationService
     }
 
     /**
-     * Notify User when they submit a new complaint / support ticket.
+     * Notify User when they submit a new complaint / support ticket, and notify Admin.
      */
     public static function notifyComplaintSubmitted(User $user, $complaint): void
     {
         try {
-            if (!$user || !$user->email) return;
+            if (!$user) return;
 
             $ticketNumber = $complaint->ticket_number ?? "TKT-{$complaint->id}";
-            $actionUrl    = route('home');
+            $userActionUrl = route('complaints.show', $complaint->id);
+            $adminUrl     = route('admin.complaints.show', $complaint->id);
 
-            // 1. Bell notification
+            // 1. User Bell notification
             try {
                 UserNotification::send(
                     $user->id,
                     'complaint_submitted',
                     "Complaint Submitted: #{$ticketNumber} 🎫",
                     "Your complaint #{$ticketNumber} has been received and is being reviewed by our support team.",
-                    $actionUrl,
+                    $userActionUrl,
                     'fa-headset'
                 );
             } catch (\Exception $e) {
                 Log::warning("Complaint submission bell notification failed: " . $e->getMessage());
             }
 
-            // 2. Firebase Push Notification
+            // 2. User Firebase Push Notification
             FirebaseService::sendToUser(
                 $user,
                 "Complaint Ticket Submitted 🎫",
                 "Ticket #{$ticketNumber} received and under review.",
                 ['type' => 'complaint_submitted', 'ticket' => (string) $ticketNumber],
-                $actionUrl
+                $userActionUrl
             );
 
-            // 2. Email Notification
-            Mail::to($user->email)->send(new BrandedMessageMail(
-                "Complaint Ticket Received: #{$ticketNumber} 🎫",
-                "Complaint Ticket Received",
-                "Thank you for contacting ApnaNest Support. We have received your complaint ticket (#{$ticketNumber}). Our dedicated support team is currently reviewing your issue and will get back to you shortly.",
-                "Support Ticket Acknowledgement",
-                "View My Account",
-                $actionUrl,
-                [
-                    'Ticket Number' => "#{$ticketNumber}",
-                    'Subject'       => $complaint->subject ?? 'N/A',
-                    'Category'      => ucfirst($complaint->category ?? 'General'),
-                    'Status'        => 'Submitted (Under Review)',
-                    'Submitted At'  => now()->format('d M Y, h:i A'),
-                ],
-                'primary',
-                'We aim to respond to all support queries within 24 hours.'
-            ));
+            // 3. User Confirmation Email
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new BrandedMessageMail(
+                        "Complaint Ticket Received: #{$ticketNumber} 🎫",
+                        "Complaint Ticket Received",
+                        "Thank you for contacting ApnaNest Support. We have received your complaint ticket (#{$ticketNumber}). Our dedicated support team is currently reviewing your issue and will get back to you shortly.",
+                        "Support Ticket Acknowledgement",
+                        "View Ticket Status",
+                        $userActionUrl,
+                        [
+                            'Ticket Number' => "#{$ticketNumber}",
+                            'Subject'       => $complaint->subject ?? 'N/A',
+                            'Category'      => ucfirst($complaint->category ?? 'General'),
+                            'Status'        => 'Submitted (Under Review)',
+                            'Submitted At'  => now()->format('d M Y, h:i A'),
+                        ],
+                        'primary',
+                        'We aim to respond to all support queries within 24 hours.'
+                    ));
+                } catch (\Exception $userMailEx) {
+                    Log::warning("User complaint email failed: " . $userMailEx->getMessage());
+                }
+            }
+
+            // 4. Admin In-App Bell Notification
+            try {
+                AdminNotification::send(
+                    'complaint_submitted',
+                    "New Complaint: #{$ticketNumber}",
+                    "Ticket #{$ticketNumber} submitted by {$user->name}. Subject: " . \Illuminate\Support\Str::limit($complaint->subject ?? 'N/A', 40),
+                    $adminUrl,
+                    'fa-shield-halved'
+                );
+            } catch (\Exception $adminEx) {
+                Log::warning("Admin complaint notification failed: " . $adminEx->getMessage());
+            }
+
+            // 5. Admin Email Alert
+            $adminEmail = self::getAdminEmail();
+            if ($adminEmail) {
+                try {
+                    Mail::to($adminEmail)->send(new BrandedMessageMail(
+                        "New Support Ticket Needs Review: #{$ticketNumber} ⚠️",
+                        "New Customer Support Ticket Filed",
+                        "A user has submitted a new complaint ticket (#{$ticketNumber}). Please review the details and assign or resolve it promptly.",
+                        "Support Ticket",
+                        "Review Complaint Ticket",
+                        $adminUrl,
+                        [
+                            'Ticket Number' => "#{$ticketNumber}",
+                            'Complainant'   => "{$user->name} ({$user->email})",
+                            'Category'      => ucfirst($complaint->category ?? 'General'),
+                            'Subject'       => $complaint->subject ?? 'N/A',
+                            'Submitted At'  => now()->format('d M Y, h:i A'),
+                        ],
+                        'warning',
+                        'Maintain rapid response times to preserve customer satisfaction.'
+                    ));
+                } catch (\Exception $adminMailEx) {
+                    Log::warning("Admin complaint email alert failed: " . $adminMailEx->getMessage());
+                }
+            }
+
         } catch (\Exception $e) {
             Log::error("NotificationService notifyComplaintSubmitted error: " . $e->getMessage());
         }

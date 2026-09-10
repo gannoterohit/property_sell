@@ -81,13 +81,19 @@
 
                 <div class="owner-sidebar-submenu owner-nav-group-menu {{ $groupOpen ? '' : 'hidden' }} ml-5 mt-1 mb-1 space-y-0.5 border-l-2 pl-3">
                     @foreach($groupItems as $item)
-                        @php $itemActive = request()->routeIs($item['match']); @endphp
+                        @php 
+                            $itemActive = request()->routeIs($item['match']); 
+                            $isLocked = ($item['route'] === 'agent.rooms.create' && !$broker->is_broker_active);
+                        @endphp
                         <a href="{{ route($item['route']) }}"
                             class="relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] transition
-                                {{ $itemActive ? 'owner-sidebar-subitem-active font-extrabold' : 'text-slate-600 font-semibold hover:bg-slate-50 hover:text-slate-900' }}">
+                                {{ $itemActive ? 'owner-sidebar-subitem-active font-extrabold' : 'text-slate-600 font-semibold hover:bg-slate-50 hover:text-slate-900' }} {{ $isLocked ? 'opacity-75' : '' }}">
                             <i class="fas {{ $item['icon'] }} w-4 text-center text-[11px]
                                 {{ $itemActive ? 'owner-sidebar-active-icon' : 'text-slate-400' }}"></i>
                             <span class="truncate">{{ $item['label'] }}</span>
+                            @if($isLocked)
+                                <i class="fas fa-lock text-[10px] text-amber-500 ml-auto" title="Pending Admin Approval"></i>
+                            @endif
                         </a>
                     @endforeach
                 </div>

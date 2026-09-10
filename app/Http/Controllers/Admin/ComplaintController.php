@@ -177,6 +177,19 @@ class ComplaintController extends Controller
             } catch (\Throwable $e) {
                 report($e);
             }
+
+            try {
+                \App\Models\UserNotification::send(
+                    $complaint->user_id,
+                    'complaint_reply',
+                    "Support replied to #{$complaint->ticket_number}",
+                    \Illuminate\Support\Str::limit($data['message'], 100),
+                    route('complaints.show', $complaint),
+                    'fa-comments'
+                );
+            } catch (\Throwable $ue) {
+                report($ue);
+            }
         }
         return back()->with('success', $data['is_internal'] ? 'Internal note added.' : 'Reply sent to complainant.');
     }

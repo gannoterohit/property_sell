@@ -182,8 +182,9 @@ class Setting extends Model
         $port = self::get('mail_port', 587);
         $username = trim(self::get('mail_username', ''));
         $password = trim(self::get('mail_password', ''));
-        $from_address = trim(self::get('contact_email', 'hello@example.com'));
-        $from_name = self::get('website_name', 'RoomRental');
+        $contactEmail = trim((string) self::get('contact_email', ''));
+        $from_address = (!empty($contactEmail) && $contactEmail !== 'hello@example.com') ? $contactEmail : ($username ?: 'hello@example.com');
+        $from_name = self::get('website_name', config('app.name', 'ApnaNest'));
 
         if ($host && $username && $password) {
             config([

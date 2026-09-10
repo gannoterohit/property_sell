@@ -32,6 +32,12 @@ class AdminSupportController extends BaseApiController
         $this->allow($request,'support.manage');$data=$request->validate(['status'=>['required',Rule::in(array_keys(Complaint::STATUSES))],'priority'=>['required',Rule::in(['low','medium','high','urgent'])],'assigned_to'=>['nullable',Rule::exists('users','id')->where('role','admin')],'resolution'=>'nullable|string|max:10000','resolution_category'=>['nullable',Rule::in(array_keys(Complaint::RESOLUTION_CATEGORIES))],'due_at'=>'nullable|date','escalated'=>'nullable|boolean']);
         $old=$complaint->status;$data['closed_at']=in_array($data['status'],['resolved','rejected','closed'],true)?now():null;$data['escalated_at']=$request->boolean('escalated')?($complaint->escalated_at?:now()):null;unset($data['escalated']);$complaint->update($data);
         $complaint->activities()->create(['actor_id'=>$request->user()->id,'type'=>'status','status_from'=>$old,'status_to'=>$complaint->status,'description'=>'Ticket management details updated.']);
+        \App\Services\NotificationService::notifyComplaintUpdated(
+            $complaint->user_id,
+            $complaint->ticket_number,
+            $complaint->status,
+            route('complaints.show', $complaint)
+        );
         return $this->sendSuccess($complaint->fresh(),'Complaint updated successfully');
     }
 

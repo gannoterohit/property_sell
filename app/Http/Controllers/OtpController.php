@@ -191,7 +191,7 @@ class OtpController extends Controller
 
         $redirect = match ($user->role) {
             'admin' => route('admin.dashboard'),
-            'broker' => $user->is_broker_active ? route('agent.dashboard') : route('agent.pending'),
+            'broker' => route('agent.dashboard'),
             'owner' => route('owner.dashboard'),
             default => route('home'),
         };
@@ -300,6 +300,10 @@ class OtpController extends Controller
         // Send Welcome email and notification
         \App\Services\NotificationService::notifyWelcome($user);
 
+        if ($user->role === 'broker') {
+            \App\Services\NotificationService::notifyAdminNewBrokerRegistered($user);
+        }
+
         // Clear referral session
         session()->forget('referral_code');
 
@@ -317,11 +321,7 @@ class OtpController extends Controller
         // Role-based redirect
         $redirect = route('home');
         if ($user->role === 'broker') {
-            if ($user->is_broker_active) {
-                $redirect = route('agent.dashboard');
-            } else {
-                $redirect = route('agent.pending');
-            }
+            $redirect = route('agent.dashboard');
         } elseif ($user->role === 'owner') {
             $redirect = route('owner.dashboard');
         }

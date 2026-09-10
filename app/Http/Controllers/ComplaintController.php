@@ -112,6 +112,18 @@ class ComplaintController extends Controller
             $complaint->update(['status' => 'under_review']);
         }
 
+        try {
+            \App\Models\AdminNotification::send(
+                'complaint_reply',
+                "New Reply on #{$complaint->ticket_number}",
+                "Complainant {$request->user()->name} replied to ticket #{$complaint->ticket_number}",
+                route('admin.complaints.show', $complaint),
+                'fa-comments'
+            );
+        } catch (\Throwable $ne) {
+            report($ne);
+        }
+
         return back()->with('success', 'Your reply has been added.');
     }
 

@@ -27,8 +27,8 @@ class BrokerActive
                     'message' => 'Your broker account is pending approval.',
                 ], 403);
             }
-            return redirect()->route('agent.pending')
-                ->with('warning', 'Your broker account is pending admin approval.');
+            return redirect()->route('agent.dashboard')
+                ->with('error', 'Your broker account is pending admin approval. You cannot create or modify properties yet.');
         }
 
         return $next($request);

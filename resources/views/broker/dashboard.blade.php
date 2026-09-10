@@ -10,6 +10,35 @@
 @php $user = Auth::user(); @endphp
 <div class="owner-dashboard-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
+    {{-- Pending Approval Alert Banner --}}
+    @if(!$user->is_broker_active)
+        <div class="mb-6 mt-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md">
+                        <i class="fas fa-hourglass-half text-xl animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-base font-extrabold text-amber-950">Broker Account Under Verification</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-300">
+                                Pending Approval
+                            </span>
+                        </div>
+                        <p class="mt-1 text-xs sm:text-sm text-amber-800 leading-relaxed max-w-2xl">
+                            Aapka broker account registration successfully ho gaya hai aur hamari team application review kar rahi hai. Jab tak Admin se approval nahi milta, aap dashboard aur analytics browse kar sakte hain (Read-Only Mode), par new properties add karna aur leads unlock karna restricted rahega.
+                        </p>
+                    </div>
+                </div>
+                <div class="shrink-0 w-full sm:w-auto">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 w-full sm:w-auto justify-center shadow-xs">
+                        <i class="fas fa-lock text-amber-600"></i> Read-Only Mode
+                    </span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Welcome Banner --}}
     <div class="agent-welcome-banner">
         <div class="welcome-text">
@@ -17,9 +46,15 @@
             <p>Here's an overview of your agent workspace and listings.</p>
         </div>
         <div class="welcome-actions">
-            <a href="{{ route('agent.rooms.create') }}" class="welcome-btn welcome-btn-primary">
-                <i class="fas fa-plus"></i> Add Property
-            </a>
+            @if($user->is_broker_active)
+                <a href="{{ route('agent.rooms.create') }}" class="welcome-btn welcome-btn-primary">
+                    <i class="fas fa-plus"></i> Add Property
+                </a>
+            @else
+                <button type="button" onclick="alert('Aapka broker account abhi verification me pending hai. Admin approval milne ke baad hi aap nayi property add kar sakte hain.');" class="welcome-btn opacity-60 cursor-not-allowed bg-slate-200 text-slate-600 border border-slate-300 shadow-none hover:bg-slate-200" title="Account verification pending">
+                    <i class="fas fa-lock"></i> Add Property (Locked)
+                </button>
+            @endif
             <a href="{{ route('agent.properties') }}" class="welcome-btn">
                 <i class="fas fa-list"></i> View All
             </a>
@@ -151,8 +186,11 @@
             @empty
                 <div class="px-5 py-12 text-center">
                     <i class="fas fa-house-circle-xmark text-3xl text-slate-200 block mb-3"></i>
-                    <p class="text-sm text-slate-500">No properties listed yet.</p>
-                    <a href="{{ route('agent.rooms.create') }}" class="mt-2 inline-block text-indigo-600 text-sm font-bold hover:underline">Create your first listing</a>
+                    @if($user->is_broker_active)
+                        <a href="{{ route('agent.rooms.create') }}" class="mt-2 inline-block text-indigo-600 text-sm font-bold hover:underline">Create your first listing</a>
+                    @else
+                        <span class="mt-2 inline-block text-slate-400 text-xs font-semibold"><i class="fas fa-lock text-[10px] mr-1"></i> Listing creation will unlock once approved</span>
+                    @endif
                 </div>
             @endforelse
         </div>
