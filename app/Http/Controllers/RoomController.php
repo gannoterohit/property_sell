@@ -375,8 +375,15 @@ class RoomController extends Controller {
         return view('owner.rooms.create-multistep', compact('propertyTypes', 'amenities', 'furnishingOptions', 'tenantOptions', 'storeRoute', 'draftsIndex'));
     }
 
-    public function store(Request $req) {
-        $data = $req->validate([
+    /**
+     * Validates input and prepares normalized payload for room create & update.
+     * Consolidates extended specifications into the single 'features' JSON column.
+     */
+    protected function validateAndPrepareRoomPayload(Request $req, ?Room $existingRoom = null): array
+    {
+        $isUpdate = $existingRoom !== null;
+
+        $rules = [
             'title'                 => 'required|string|max:255',
             'description'           => 'nullable|string',
             'property_type_id'      => ['required', 'integer', Rule::exists('property_types', 'id')->where('status', true)],
@@ -386,39 +393,7 @@ class RoomController extends Controller {
             'price'                 => 'required_if:purpose,sell|nullable|numeric|min:0',
             'deposit'               => 'nullable|numeric|min:0',
             'area_sqft'             => 'nullable|numeric|min:0',
-            'super_builtup_area'    => 'nullable|numeric|min:0',
-            'carpet_area'           => 'nullable|numeric|min:0',
-            'plot_area'             => 'nullable|numeric|min:0',
-            'plot_area_unit'        => 'nullable|string|in:sqft,sqyd,gaj',
-            'facing'                => 'nullable|string|max:30',
-            'bathrooms'             => 'nullable|integer|min:0|max:50',
-            'balconies'             => 'nullable|integer|min:0|max:50',
-            'floor_no'              => 'nullable|integer|min:-5|max:200',
-            'total_floors'          => 'nullable|integer|min:0|max:200',
-            'parking_type'          => 'nullable|string|max:40',
-            'water_supply'          => 'nullable|string|max:40',
-            'gated_community'       => 'nullable|boolean',
             'possession_status'     => 'nullable|in:ready_to_move,under_construction',
-            'possession_date'       => 'nullable|string|max:30',
-            'property_age'          => 'nullable|string|max:50',
-            'ownership_type'        => 'nullable|string|max:100',
-            'rera_id'               => 'nullable|string|max:100',
-            'price_negotiable'      => 'nullable|boolean',
-            'is_bank_loan_approved' => 'nullable|boolean',
-            'commercial_type'       => 'nullable|string|max:60',
-            'is_main_road_facing'   => 'nullable|boolean',
-            'is_corner_property'    => 'nullable|boolean',
-            'frontage_width_ft'     => 'nullable|integer|min:0|max:1000',
-            'washroom_type'         => 'nullable|string|max:30',
-            'power_backup'          => 'nullable|string|max:30',
-            'suitable_for'          => 'nullable|array',
-            'suitable_for.*'        => 'string|max:60',
-            'maintenance_charges'   => 'nullable|numeric|min:0',
-            'maintenance_type'      => 'nullable|string|in:included,extra',
-            'lockin_period_months'  => 'nullable|integer|min:0|max:120',
-            'notice_period_days'    => 'nullable|integer|min:0|max:365',
-            'food_preference'       => 'nullable|string|max:30',
-            'pet_friendly'          => 'nullable|boolean',
             'city'                  => 'required|string',
             'state'                 => 'nullable|string',
             'country'               => 'nullable|string',
@@ -432,38 +407,61 @@ class RoomController extends Controller {
             'landmarks'             => 'nullable|array',
             'landmarks.*'           => 'string',
             'photos.*'              => 'image|mimes:jpg,jpeg,png,webp|max:5120',
-            'photos'                => 'required|array|min:1|max:10',
+            'photos'                => $isUpdate ? 'nullable|array|max:10' : 'required|array|min:1|max:10',
             'video'                 => 'nullable|mimes:mp4,avi,mov,wmv|max:20480',
             'video_url'             => 'nullable|url|max:255',
             'listing_type'          => 'nullable|in:owner,broker',
             'broker_fee'            => 'nullable|numeric|min:0',
-        ]);
-
-        // Pack extended market attributes into single features JSON column
-        $featureKeys = [
-            'super_builtup_area', 'carpet_area', 'plot_area', 'plot_area_unit',
-            'facing', 'bathrooms', 'balconies', 'floor_no', 'total_floors',
-            'parking_type', 'water_supply', 'gated_community',
-            'possession_date', 'property_age', 'rera_id', 'price_negotiable', 'is_bank_loan_approved',
-            'commercial_type', 'is_main_road_facing', 'is_corner_property', 'frontage_width_ft',
-            'washroom_type', 'power_backup', 'suitable_for',
-            'maintenance_charges', 'maintenance_type', 'lockin_period_months', 'notice_period_days',
-            'food_preference', 'pet_friendly',
         ];
 
-        $features = [];
-        foreach ($featureKeys as $key) {
+        $data = $req->validate($rules);
+
+        // Extended market & specification attributes stored directly into 'features' JSON column
+        $booleanFeatureKeys = [
+            'price_negotiable', 'is_bank_loan_approved', 'is_main_road_facing',
+            'is_corner_property', 'gated_community', 'pet_friendly',
+        ];
+
+        $allFeatureKeys = [
+            'super_builtup_area', 'carpet_area', 'plot_area', 'plot_area_unit',
+            'facing', 'bathrooms', 'balconies', 'floor_no', 'total_floors',
+            'parking_type', 'water_supply', 'possession_date', 'property_age',
+            'ownership_type', 'rera_id', 'commercial_type', 'frontage_width_ft',
+            'washroom_type', 'power_backup', 'suitable_for', 'maintenance_charges',
+            'maintenance_type', 'lockin_period_months', 'notice_period_days', 'food_preference',
+            ...$booleanFeatureKeys,
+        ];
+
+        $features = is_array($existingRoom?->features) ? $existingRoom->features : [];
+        foreach ($allFeatureKeys as $key) {
             if ($req->has($key)) {
-                $val = $req->input($key);
-                if (in_array($key, ['price_negotiable', 'is_bank_loan_approved', 'is_main_road_facing', 'is_corner_property', 'gated_community', 'pet_friendly'])) {
-                    $val = $req->boolean($key);
-                }
-                $features[$key] = $val;
+                $features[$key] = in_array($key, $booleanFeatureKeys, true)
+                    ? $req->boolean($key)
+                    : $req->input($key);
             }
-            unset($data[$key]);
         }
+
         $data['features'] = $features;
-        $data['area_sqft'] = $data['area_sqft'] ?? ($features['carpet_area'] ?? ($features['super_builtup_area'] ?? ($features['plot_area'] ?? null)));
+        $data['area_sqft'] = $data['area_sqft'] ?? ($features['carpet_area'] ?? ($features['super_builtup_area'] ?? ($features['plot_area'] ?? $existingRoom?->area_sqft)));
+
+        // Synchronize rent/price for backward-compatible queries when purpose is sell
+        if (($data['purpose'] ?? ($existingRoom?->purpose ?? 'rent')) === 'sell') {
+            $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? $existingRoom?->rent ?? 0);
+        }
+
+        // Clean coordinates
+        if (isset($data['latitude']) && $data['latitude'] === '') {
+            $data['latitude'] = null;
+        }
+        if (isset($data['longitude']) && $data['longitude'] === '') {
+            $data['longitude'] = null;
+        }
+
+        return $data;
+    }
+
+    public function store(Request $req) {
+        $data = $this->validateAndPrepareRoomPayload($req);
 
         $newPhotoPaths = [];
         $newVideoPath = null;
@@ -485,18 +483,6 @@ class RoomController extends Controller {
 
             $data['status'] = 'pending';
             $data['listing_fee_paid'] = false;
-            
-            if (($data['purpose'] ?? 'rent') === 'sell') {
-                $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? 0);
-            }
-
-            // Convert empty latitude/longitude strings to null
-            if (isset($data['latitude']) && $data['latitude'] === '') {
-                $data['latitude'] = null;
-            }
-            if (isset($data['longitude']) && $data['longitude'] === '') {
-                $data['longitude'] = null;
-            }
             
             // Handle multiple photos with Compression
             if ($req->hasFile('photos')) {
@@ -990,117 +976,12 @@ class RoomController extends Controller {
             abort(403, 'Unauthorized');
         }
 
-        $data = $req->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'property_type_id' => ['required', 'integer', Rule::exists('property_types', 'id')->where('status', true)],
-            'property_category_id' => [
-                'required',
-                'integer',
-                Rule::exists('property_categories', 'id')->where(fn ($query) => $query->where('status', true)->where('property_type_id', $req->property_type_id)),
-            ],
-            'purpose'             => 'required|in:rent,sell',
-            'rent'                => 'required_if:purpose,rent|nullable|numeric|min:0',
-            'price'               => 'required_if:purpose,sell|nullable|numeric|min:0',
-            'deposit'             => 'nullable|numeric|min:0',
-            'area_sqft'           => 'nullable|numeric|min:0',
-            'possession_status'   => 'nullable|in:ready_to_move,under_construction',
-            'super_builtup_area'    => 'nullable|numeric|min:0',
-            'carpet_area'           => 'nullable|numeric|min:0',
-            'plot_area'             => 'nullable|numeric|min:0',
-            'plot_area_unit'        => 'nullable|string|in:sqft,sqyd,gaj',
-            'facing'                => 'nullable|string|max:30',
-            'bathrooms'             => 'nullable|integer|min:0|max:50',
-            'balconies'             => 'nullable|integer|min:0|max:50',
-            'floor_no'              => 'nullable|integer|min:-5|max:200',
-            'total_floors'          => 'nullable|integer|min:0|max:200',
-            'parking_type'          => 'nullable|string|max:40',
-            'water_supply'          => 'nullable|string|max:40',
-            'gated_community'       => 'nullable|boolean',
-            'possession_status'     => 'nullable|in:ready_to_move,under_construction',
-            'possession_date'       => 'nullable|string|max:30',
-            'property_age'          => 'nullable|string|max:50',
-            'ownership_type'        => 'nullable|string|max:100',
-            'rera_id'               => 'nullable|string|max:100',
-            'price_negotiable'      => 'nullable|boolean',
-            'is_bank_loan_approved' => 'nullable|boolean',
-            'commercial_type'       => 'nullable|string|max:60',
-            'is_main_road_facing'   => 'nullable|boolean',
-            'is_corner_property'    => 'nullable|boolean',
-            'frontage_width_ft'     => 'nullable|integer|min:0|max:1000',
-            'washroom_type'         => 'nullable|string|max:30',
-            'power_backup'          => 'nullable|string|max:30',
-            'suitable_for'          => 'nullable|array',
-            'suitable_for.*'        => 'string|max:60',
-            'maintenance_charges'   => 'nullable|numeric|min:0',
-            'maintenance_type'      => 'nullable|string|in:included,extra',
-            'lockin_period_months'  => 'nullable|integer|min:0|max:120',
-            'notice_period_days'    => 'nullable|integer|min:0|max:365',
-            'food_preference'       => 'nullable|string|max:30',
-            'pet_friendly'          => 'nullable|boolean',
-            'ownership_type'      => 'nullable|string|max:100',
-            'city'                => 'required|string',
-            'state'               => 'nullable|string',
-            'country'             => 'nullable|string',
-            'address'             => 'nullable|string',
-            'latitude'            => 'nullable|numeric',
-            'longitude'           => 'nullable|numeric',
-            'photos.*'            => 'image|mimes:jpg,jpeg,png,webp|max:5120',
-            'photos'              => 'nullable|array|max:10',
-            'video'               => 'nullable|mimes:mp4,avi,mov,wmv|max:20480',
-            'video_url'           => 'nullable|url|max:255',
-            'furnishing_type'     => ['nullable'],
-            'tenant_type'         => ['nullable'],
-            'amenities'           => 'nullable|array',
-            'amenities.*'         => ['string'],
-            'landmarks'           => 'nullable|array',
-            'listing_type'        => 'nullable|in:owner,broker',
-            'broker_fee'          => 'nullable|numeric|min:0',
-        ]);
-
-        // Merge with existing features
-        $existingFeatures = is_array($room->features) ? $room->features : [];
-        $featureKeys = [
-            'super_builtup_area', 'carpet_area', 'plot_area', 'plot_area_unit',
-            'facing', 'bathrooms', 'balconies', 'floor_no', 'total_floors',
-            'parking_type', 'water_supply', 'gated_community',
-            'possession_date', 'property_age', 'rera_id', 'price_negotiable', 'is_bank_loan_approved',
-            'commercial_type', 'is_main_road_facing', 'is_corner_property', 'frontage_width_ft',
-            'washroom_type', 'power_backup', 'suitable_for',
-            'maintenance_charges', 'maintenance_type', 'lockin_period_months', 'notice_period_days',
-            'food_preference', 'pet_friendly',
-        ];
-
-        $features = $existingFeatures;
-        foreach ($featureKeys as $key) {
-            if ($req->has($key)) {
-                $val = $req->input($key);
-                if (in_array($key, ['price_negotiable', 'is_bank_loan_approved', 'is_main_road_facing', 'is_corner_property', 'gated_community', 'pet_friendly'])) {
-                    $val = $req->boolean($key);
-                }
-                $features[$key] = $val;
-            }
-            unset($data[$key]);
-        }
-        $data['features'] = $features;
-        $data['area_sqft'] = $data['area_sqft'] ?? ($features['carpet_area'] ?? ($features['super_builtup_area'] ?? ($features['plot_area'] ?? $room->area_sqft)));
+        $data = $this->validateAndPrepareRoomPayload($req, $room);
 
         $newPhotoPaths = [];
         $oldPhotoPaths = [];
         DB::beginTransaction();
         try {
-            if (($data['purpose'] ?? $room->purpose) === 'sell') {
-                $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? $room->rent ?? 0);
-            }
-
-            // Convert empty latitude/longitude strings to null
-            if (isset($data['latitude']) && $data['latitude'] === '') {
-                $data['latitude'] = null;
-            }
-            if (isset($data['longitude']) && $data['longitude'] === '') {
-                $data['longitude'] = null;
-            }
-            
             // Handle multiple photos with Compression
             if ($req->hasFile('photos')) {
                 $photos = [];
