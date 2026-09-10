@@ -145,15 +145,19 @@
                 <div id="roomTypeContainer">
                     <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Room Configuration / Unit Type *</label>
                     <select name="room_type" id="roomTypeSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                        <option value="1BHK">1 BHK</option>
-                        <option value="2BHK" selected>2 BHK</option>
-                        <option value="3BHK">3 BHK</option>
-                        <option value="4BHK+">4 BHK+</option>
-                        <option value="1RK">1 RK</option>
-                        <option value="Studio">Studio Apartment</option>
-                        <option value="PG">PG Unit</option>
-                        <option value="Commercial Unit">Commercial Unit</option>
-                        <option value="Plot">Plot / Land</option>
+                        @if(isset($roomTypeOptions) && $roomTypeOptions->isNotEmpty())
+                            @foreach($roomTypeOptions as $opt)
+                                <option value="{{ $opt->id }}" {{ $opt->key === '2bhk' ? 'selected' : '' }}>{{ $opt->label }}</option>
+                            @endforeach
+                        @else
+                            <option value="1BHK">1 BHK</option>
+                            <option value="2BHK" selected>2 BHK</option>
+                            <option value="3BHK">3 BHK</option>
+                            <option value="4BHK+">4 BHK+</option>
+                            <option value="1RK">1 RK</option>
+                            <option value="Studio">Studio Apartment</option>
+                            <option value="PG">PG Unit</option>
+                        @endif
                     </select>
                 </div>
 
@@ -415,8 +419,8 @@
 
         {{-- ========== STEP 4: AMENITIES & RULES ========== --}}
         <div class="step-pane hidden" data-step="4">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Amenities & Tenant Preferences</h2>
-            <p class="text-xs sm:text-sm text-slate-500 mb-5">Select facilities provided and preferred occupant guidelines.</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1" id="step4Title">Amenities & Tenant Preferences</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5" id="step4Subtitle">Select facilities provided and preferred occupant guidelines.</p>
 
             <div class="space-y-5">
                 <div>
@@ -431,42 +435,60 @@
                     </div>
                 </div>
 
-                <div id="furnishingTenantRow" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Furnishing Status *</label>
-                        <select name="furnishing_type" id="furnishingSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                {{-- Furnishing status: applies to residential flats/villas (both rent & sell) --}}
+                <div id="furnishingContainer">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Furnishing Status *</label>
+                    <select name="furnishing_type" id="furnishingSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        @if(isset($furnishingOptions) && $furnishingOptions->isNotEmpty())
+                            @foreach($furnishingOptions as $opt)
+                                <option value="{{ $opt->id }}" {{ in_array($opt->key, ['semi-furnished', 'semi_furnished']) ? 'selected' : '' }}>{{ $opt->label }}</option>
+                            @endforeach
+                        @else
                             <option value="Semi Furnished" selected>Semi Furnished</option>
                             <option value="Fully Furnished">Fully Furnished</option>
                             <option value="Unfurnished">Unfurnished</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Preferred Occupants / Tenants *</label>
-                        <select name="tenant_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="Anyone" selected>Anyone (Family, Bachelor, Company)</option>
-                            <option value="Family">Family Only</option>
-                            <option value="Bachelor">Bachelor Only</option>
-                            <option value="Girls">Girls / Females Only</option>
-                            <option value="Boys">Boys Only</option>
-                            <option value="Company / Corporate">Company / Corporate Lease</option>
-                        </select>
-                    </div>
+                        @endif
+                    </select>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Food Preference</label>
-                        <select name="food_preference" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="No Preference">No Food Restriction (All Allowed)</option>
-                            <option value="Vegetarian Only">Pure Vegetarian Only</option>
-                        </select>
+                {{-- Tenant guidelines (Applies ONLY to Rent; hidden when Purpose = Sell) --}}
+                <div id="rentalPreferencesGroup" class="space-y-4 p-4 rounded-2xl bg-indigo-50/40 border border-indigo-100">
+                    <div class="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                        <i class="fas fa-users text-indigo-600"></i> Tenant & Occupancy Guidelines (For Rent Only)
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Pet Friendly?</label>
-                        <select name="pet_friendly" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="1">Yes (Pets Allowed)</option>
-                            <option value="0" selected>No Pets Allowed</option>
-                        </select>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Preferred Occupants / Tenants</label>
+                            <select name="tenant_type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                @if(isset($tenantOptions) && $tenantOptions->isNotEmpty())
+                                    @foreach($tenantOptions as $opt)
+                                        <option value="{{ $opt->id }}" {{ $opt->key === 'any' ? 'selected' : '' }}>{{ $opt->label }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="Anyone" selected>Anyone (Family, Bachelor, Company)</option>
+                                    <option value="Family">Family Only</option>
+                                    <option value="Bachelor">Bachelor Only</option>
+                                    <option value="Girls">Girls / Females Only</option>
+                                    <option value="Boys">Boys Only</option>
+                                    <option value="Company / Corporate">Company / Corporate Lease</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Food Preference</label>
+                            <select name="food_preference" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="No Preference">No Food Restriction (All Allowed)</option>
+                                <option value="Vegetarian Only">Pure Vegetarian Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Pet Friendly?</label>
+                            <select name="pet_friendly" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="1">Yes (Pets Allowed)</option>
+                                <option value="0" selected>No Pets Allowed</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -729,6 +751,24 @@ window.PROPERTY_CATALOG = @json($propertyTypes);
             rentPricing.classList.toggle('hidden', isSell);
             sellPricing.classList.toggle('hidden', !isSell);
         }
+
+        // Toggle Rental Preferences (Hide when Sell)
+        const rentalPreferences = $('rentalPreferencesGroup');
+        if (rentalPreferences) {
+            rentalPreferences.classList.toggle('hidden', isSell);
+        }
+
+        const step4Title = $('step4Title');
+        const step4Subtitle = $('step4Subtitle');
+        if (step4Title && step4Subtitle) {
+            if (isSell) {
+                step4Title.textContent = 'Amenities & Features';
+                step4Subtitle.textContent = 'Select society and property amenities.';
+            } else {
+                step4Title.textContent = 'Amenities & Tenant Preferences';
+                step4Subtitle.textContent = 'Select facilities provided and preferred occupant guidelines.';
+            }
+        }
     }
 
     document.querySelectorAll('.purpose-card').forEach(card => {
@@ -767,12 +807,20 @@ window.PROPERTY_CATALOG = @json($propertyTypes);
         // Check if commercial, plot or residential
         const isCommercial = ['shop', 'office', 'showroom', 'warehouse'].includes(slug);
         const isPlot = ['plot-land', 'plot', 'land'].includes(slug);
+        const selectedPurpose = document.querySelector('input[name="purpose"]:checked')?.value || 'rent';
+        const isSell = (selectedPurpose === 'sell');
 
         $('commercialSpecsGroup').classList.toggle('hidden', !isCommercial);
         $('plotSpecsGroup').classList.toggle('hidden', !isPlot);
         $('residentialSpecsGroup').classList.toggle('hidden', isCommercial || isPlot);
         $('roomTypeContainer').classList.toggle('hidden', isPlot);
-        $('furnishingTenantRow').classList.toggle('hidden', isPlot);
+        
+        if ($('furnishingContainer')) {
+            $('furnishingContainer').classList.toggle('hidden', isPlot);
+        }
+        if ($('rentalPreferencesGroup')) {
+            $('rentalPreferencesGroup').classList.toggle('hidden', isPlot || isSell);
+        }
     }
 
     typeSelect.addEventListener('change', () => syncPropertyTypes());
@@ -979,14 +1027,26 @@ window.PROPERTY_CATALOG = @json($propertyTypes);
         const data = collectStepData(TOTAL_STEPS);
         const isSell = (data.purpose === 'sell');
         const rows = [
-            ['Listing Purpose', isSell ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">FOR SALE</span>' : '<span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold">FOR RENT</span>'],
+            ['Listing Purpose', isSell ? '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs">FOR SALE</span>' : '<span class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 font-black text-xs">FOR RENT</span>'],
             ['Property Title', data.title],
             ['City & Locality', (data.city || '') + (data.landmark ? ' (Near ' + data.landmark + ')' : '')],
             ['Pricing', isSell ? ('₹' + (data.price ? Number(data.price).toLocaleString('en-IN') : '—')) : ('₹' + (data.rent ? Number(data.rent).toLocaleString('en-IN') + '/month' : '—'))],
-            ['Deposit / Terms', isSell ? (data.possession_status === 'ready_to_move' ? 'Ready to Move' : 'Under Construction') : ('Deposit: ₹' + (data.deposit || '0'))],
+            ['Terms / Status', isSell ? (data.possession_status === 'ready_to_move' ? 'Ready to Move' : 'Under Construction') : ('Deposit: ₹' + (data.deposit || '0'))],
             ['Furnishing', data.furnishing_type || '—'],
-            ['Preferred Occupant', data.tenant_type || '—'],
         ];
+
+        if (isSell) {
+            rows.push(['Ownership Title', data.ownership_type || 'Freehold']);
+            if (data.property_age) rows.push(['Property Age', data.property_age]);
+            if (data.possession_date) rows.push(['Possession Target', data.possession_date]);
+            if (data.rera_id) rows.push(['RERA Registered ID', data.rera_id]);
+            rows.push(['Price Negotiable', data.price_negotiable == '1' ? 'Yes' : 'Fixed Price']);
+        } else {
+            rows.push(['Preferred Occupant', data.tenant_type || 'Anyone']);
+            if (data.maintenance_charges) rows.push(['Maintenance', '₹' + data.maintenance_charges + ' (' + (data.maintenance_type || 'extra') + ')']);
+            if (data.food_preference) rows.push(['Food Preference', data.food_preference]);
+            if (data.lockin_period_months) rows.push(['Lock-in Period', data.lockin_period_months + ' Months']);
+        }
 
         let html = '<div class="bg-slate-50 rounded-2xl p-5 space-y-3">';
         rows.forEach(([k, v]) => {

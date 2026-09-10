@@ -87,24 +87,36 @@
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Furnishing</label>
-                                    <select name="furnishing_type" required class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
-                                        @foreach(App\Models\RoomOption::optionsFor('furnishing_type', $room->furnishing_option_id) as $option)
-                                            <option value="{{ $option->id }}" {{ $room->furnishing_option_id == $option->id ? 'selected' : '' }}>{{ $option->label }}</option>
-                                        @endforeach
-                                    </select>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Unit / Room Type</label>
+                                        <select name="room_type" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                            <option value="">-- Select Type --</option>
+                                            @foreach(\App\Models\RoomOption::optionsFor('room_type', $room->room_type_option_id) as $option)
+                                                <option value="{{ $option->id }}" {{ $room->room_type_option_id == $option->id ? 'selected' : '' }}>{{ $option->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Furnishing</label>
+                                        <select name="furnishing_type" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                            <option value="">-- Select Furnishing --</option>
+                                            @foreach(\App\Models\RoomOption::optionsFor('furnishing_type', $room->furnishing_option_id) as $option)
+                                                <option value="{{ $option->id }}" {{ $room->furnishing_option_id == $option->id ? 'selected' : '' }}>{{ $option->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2 ml-1">Purpose</label>
                                     <div class="grid grid-cols-2 gap-3">
-                                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? 'rent') !== 'sell' ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
+                                        <label class="edit-purpose-card flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? 'rent') !== 'sell' ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
                                             <input type="radio" name="purpose" value="rent" class="edit-purpose-radio sr-only" {{ ($room->purpose ?? 'rent') !== 'sell' ? 'checked' : '' }}>
                                             <i class="fas fa-key text-indigo-600"></i>
                                             <span>For Rent</span>
                                         </label>
-                                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? '') === 'sell' ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
+                                        <label class="edit-purpose-card flex items-center gap-2.5 p-3 rounded-2xl border-2 {{ ($room->purpose ?? '') === 'sell' ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 font-black' : 'border-slate-200 bg-white text-slate-700 font-bold' }} cursor-pointer transition">
                                             <input type="radio" name="purpose" value="sell" class="edit-purpose-radio sr-only" {{ ($room->purpose ?? '') === 'sell' ? 'checked' : '' }}>
                                             <i class="fas fa-tags text-emerald-600"></i>
                                             <span>For Sale</span>
@@ -154,6 +166,11 @@
                                             <input type="number" name="notice_period_days" min="0" value="{{ $room->feature('notice_period_days') }}" placeholder="e.g. 30"
                                                    class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Available From Date</label>
+                                        <input type="date" name="available_from" value="{{ $room->feature('available_from') }}"
+                                               class="w-full px-4 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
                                     </div>
                                 </div>
 
@@ -335,15 +352,30 @@
                                         var isSell = (this.value === 'sell');
                                         var rentSec = document.getElementById('editRentSection');
                                         var sellSec = document.getElementById('editSellSection');
+                                        var tenantSec = document.getElementById('editTenantGroup');
                                         if (rentSec) rentSec.classList.toggle('hidden', isSell);
                                         if (sellSec) sellSec.classList.toggle('hidden', !isSell);
+                                        if (tenantSec) tenantSec.classList.toggle('hidden', isSell);
+
+                                        // Update visual card styles
+                                        document.querySelectorAll('.edit-purpose-card').forEach(function(card){
+                                            var input = card.querySelector('input');
+                                            if (input && input.checked) {
+                                                card.classList.add(input.value === 'sell' ? 'border-emerald-600' : 'border-indigo-600', input.value === 'sell' ? 'bg-emerald-50/50' : 'bg-indigo-50/50');
+                                                card.classList.remove('border-slate-200', 'bg-white');
+                                            } else if (input) {
+                                                card.classList.remove('border-emerald-600', 'border-indigo-600', 'bg-emerald-50/50', 'bg-indigo-50/50');
+                                                card.classList.add('border-slate-200', 'bg-white');
+                                            }
+                                        });
                                     });
                                 });
                                 </script>
 
-                                <div>
+                                <div id="editTenantGroup" class="{{ ($room->purpose ?? 'rent') === 'sell' ? 'hidden' : '' }}">
                                     <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1 ml-1">Preferred Tenant</label>
-                                    <select name="tenant_type" required class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                    <select name="tenant_type" class="w-full px-4 py-3 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition text-sm font-medium">
+                                        <option value="">Any Occupants</option>
                                         @foreach(App\Models\RoomOption::optionsFor('tenant_type', $room->tenant_option_id) as $option)
                                             <option value="{{ $option->id }}" {{ $room->tenant_option_id == $option->id ? 'selected' : '' }}>{{ $option->label }}</option>
                                         @endforeach
@@ -534,6 +566,7 @@
                                     <input type="text" name="country" id="countryInput" value="{{ $room->country }}">
                                     <input type="text" name="state" id="stateInput" value="{{ $room->state }}">
                                     <input type="text" name="city" id="cityInput" value="{{ $room->city }}">
+                                    <input type="text" name="pincode" id="pincodeInput" value="{{ $room->feature('pincode') }}">
                                     <input type="text" name="address" id="location_address" value="{{ $room->address }}">
                                     <input type="hidden" name="latitude" id="latitude" value="{{ $room->latitude }}">
                                     <input type="hidden" name="longitude" id="longitude" value="{{ $room->longitude }}">

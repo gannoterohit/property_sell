@@ -14,16 +14,23 @@ class BrokerRoomController extends Controller
 {
     public function create(Request $request)
     {
-        $propertyTypes = PropertyType::orderBy('name')->get(['id', 'name']);
+        $propertyTypes = PropertyType::with(['categories' => function($q) {
+            $q->where('status', true)->orderBy('name');
+        }])->where('status', true)->orderBy('name')->get();
+
         $amenities = RoomOption::optionsFor('amenity')->pluck('label')->all();
         if (empty($amenities)) {
-            $amenities = ['WiFi', 'Parking', 'AC', 'Power Backup', 'Lift', 'Security', 'CCTV'];
+            $amenities = ['High-speed WiFi', 'Car & Bike Parking', 'Air Conditioner', 'Power Backup', 'Lift / Elevator', '24x7 Security Guard', 'CCTV Surveillance', '24hr Water Supply', 'Fitness Gym', 'Swimming Pool', 'Club House', 'Park / Green Area', 'Fire Safety', 'Piped Gas (PNG)'];
         }
+
+        $roomTypeOptions = RoomOption::optionsFor('room_type');
+        $furnishingOptions = RoomOption::optionsFor('furnishing_type');
+        $tenantOptions = RoomOption::optionsFor('tenant_type');
 
         $storeRoute = route('agent.rooms.store');
         $draftsIndex = route('agent.rooms.drafts');
 
-        return view('broker.rooms.create-multistep', compact('propertyTypes', 'amenities', 'storeRoute', 'draftsIndex'));
+        return view('broker.rooms.create-multistep', compact('propertyTypes', 'amenities', 'roomTypeOptions', 'furnishingOptions', 'tenantOptions', 'storeRoute', 'draftsIndex'));
     }
 
     public function duplicate(Room $room)

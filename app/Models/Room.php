@@ -456,25 +456,66 @@ class Room extends Model
             return $this->roomTypeOption->label;
         }
 
-        return RoomOption::getLabel('room_type', $this->room_type_option_id);
+        if ($this->room_type_option_id) {
+            $label = RoomOption::getLabel('room_type', $this->room_type_option_id);
+            if ($label !== 'N/A') {
+                return $label;
+            }
+        }
+
+        if ($this->feature('commercial_type')) {
+            return $this->feature('commercial_type');
+        }
+
+        if ($this->isPlot()) {
+            return 'Plot / Land';
+        }
+
+        if ($this->propertyCategory?->name) {
+            return $this->propertyCategory->name;
+        }
+
+        return $this->propertyType?->name ?? 'Property';
     }
 
     public function furnishingTypeLabel(): string
     {
+        if ($this->isPlot()) {
+            return 'Not Applicable (Plot)';
+        }
+
         if ($this->relationLoaded('furnishingOption') && $this->furnishingOption) {
             return $this->furnishingOption->label;
         }
 
-        return RoomOption::getLabel('furnishing_type', $this->furnishing_option_id);
+        if ($this->furnishing_option_id) {
+            $label = RoomOption::getLabel('furnishing_type', $this->furnishing_option_id);
+            if ($label !== 'N/A') {
+                return $label;
+            }
+        }
+
+        return $this->feature('furnishing_type', 'Unfurnished');
     }
 
     public function tenantTypeLabel(): string
     {
+        if ($this->isForSell()) {
+            return 'Open to All Buyers';
+        }
+
         if ($this->relationLoaded('tenantOption') && $this->tenantOption) {
             return $this->tenantOption->label;
         }
 
-        return RoomOption::getLabel('tenant_type', $this->tenant_option_id);
+        if ($this->tenant_option_id) {
+            $label = RoomOption::getLabel('tenant_type', $this->tenant_option_id);
+            if ($label !== 'N/A') {
+                return $label;
+            }
+        }
+
+        return $this->feature('tenant_type', 'All / Family / Bachelor');
     }
 
     public function scopePublicVisible($query)

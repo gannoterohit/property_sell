@@ -74,9 +74,19 @@
                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
                                 <i class="fas fa-tag text-[10px]"></i> For Sale
                             </span>
+                            @if($room->feature('price_negotiable'))
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">
+                                    <i class="fas fa-handshake text-[10px]"></i> Negotiable
+                                </span>
+                            @endif
                         @else
                             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <i class="fas fa-key text-[10px]"></i> For Rent
+                            </span>
+                        @endif
+                        @if($room->feature('gated_community'))
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                <i class="fas fa-shield-alt text-[10px]"></i> Gated Society
                             </span>
                         @endif
                         @if($room->is_featured)
@@ -264,15 +274,25 @@
                                 </div>
                             </div>
 
-                            {{-- 3. Furnishing Status --}}
+                            {{-- 3. Furnishing / Facing Status --}}
                             <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
                                 <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 text-sm font-black shadow-xs">
-                                    <i class="fas fa-couch"></i>
+                                    @if($room->isPlot())
+                                        <i class="fas fa-compass"></i>
+                                    @else
+                                        <i class="fas fa-couch"></i>
+                                    @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Furnishing</div>
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                        {{ $room->isPlot() ? 'Facing' : 'Furnishing' }}
+                                    </div>
                                     <div class="text-sm font-bold text-slate-900 capitalize truncate leading-snug">
-                                        {{ $room->furnishingTypeLabel() }}
+                                        @if($room->isPlot())
+                                            {{ $room->feature('facing') ? $room->feature('facing') . ' Facing' : 'Open Facing' }}
+                                        @else
+                                            {{ $room->furnishingTypeLabel() }}
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -285,35 +305,50 @@
                                 <div class="min-w-0">
                                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Property Type</div>
                                     <div class="text-sm font-bold text-slate-900 truncate leading-snug">
-                                        {{ $room->propertyType?->name ?? 'Room' }}
+                                        {{ $room->propertyType?->name ?? 'Property' }}
                                         @if($room->roomTypeLabel() !== 'N/A') · {{ $room->roomTypeLabel() }} @endif
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- 5. Carpet Area --}}
+                            {{-- 5. Area (Plot Area or Built-up Area) --}}
                             <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
                                 <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 text-sm font-black shadow-xs">
                                     <i class="fas fa-ruler-combined"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Built-up Area</div>
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                        {{ $room->isPlot() ? 'Plot Dimensions' : 'Built-up Area' }}
+                                    </div>
                                     <div class="text-base font-extrabold text-slate-900 leading-snug">
-                                        {{ $room->area_sqft ? number_format((float)$room->area_sqft) . ' sqft' : 'Standard' }}
+                                        @if($room->isPlot() && $room->feature('plot_area'))
+                                            {{ $room->feature('plot_area') }} {{ strtoupper($room->feature('plot_area_unit', 'sqft')) }}
+                                        @elseif($room->area_sqft)
+                                            {{ number_format((float)$room->area_sqft) }} sqft
+                                        @else
+                                            Standard
+                                        @endif
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- 6. Preferred Tenants --}}
+                            {{-- 6. Ownership Title (Sell) or Preferred Tenants (Rent) --}}
                             <div class="stat-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-50 transition-colors">
-                                <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 text-sm font-black shadow-xs">
-                                    <i class="fas fa-users"></i>
+                                <div class="stat-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $room->isForSell() ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700' }} text-sm font-black shadow-xs">
+                                    <i class="fas {{ $room->isForSell() ? 'fa-file-contract' : 'fa-users' }}"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Available For</div>
-                                    <div class="text-sm font-bold text-slate-900 capitalize truncate leading-snug">
-                                        {{ $room->tenantTypeLabel() }}
-                                    </div>
+                                    @if($room->isForSell())
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ownership Title</div>
+                                        <div class="text-sm font-bold text-slate-900 capitalize truncate leading-snug">
+                                            {{ $room->ownership_type ?: ($room->feature('ownership_type') ?: 'Freehold') }}
+                                        </div>
+                                    @else
+                                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Available For</div>
+                                        <div class="text-sm font-bold text-slate-900 capitalize truncate leading-snug">
+                                            {{ $room->tenantTypeLabel() }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -359,30 +394,32 @@
                             </div>
                         @endif
 
-                        {{-- Bathrooms & Balconies --}}
-                        @if($room->feature('bathrooms', $room->bathrooms))
-                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Bathrooms</span>
-                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('bathrooms', $room->bathrooms) }} Baths</span>
-                            </div>
-                        @endif
+                        {{-- Bathrooms & Balconies (Residential / Commercial only, not Plot) --}}
+                        @if(!$room->isPlot())
+                            @if($room->feature('bathrooms', $room->bathrooms))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Bathrooms</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('bathrooms', $room->bathrooms) }} Baths</span>
+                                </div>
+                            @endif
 
-                        @if($room->feature('balconies', $room->balconies))
-                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Balconies</span>
-                                <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('balconies', $room->balconies) }} Balconies</span>
-                            </div>
-                        @endif
+                            @if($room->feature('balconies', $room->balconies))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Balconies</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('balconies', $room->balconies) }} Balconies</span>
+                                </div>
+                            @endif
 
-                        {{-- Floor Number / Total Floors --}}
-                        @if($room->feature('floor_no') !== null || $room->feature('total_floors') !== null)
-                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Floor</span>
-                                <span class="font-extrabold text-slate-900 text-sm">
-                                    {{ $room->feature('floor_no') !== null ? ($room->feature('floor_no') == 0 ? 'Ground' : $room->feature('floor_no') . 'th') : '—' }}
-                                    @if($room->feature('total_floors')) of {{ $room->feature('total_floors') }} Floors @endif
-                                </span>
-                            </div>
+                            {{-- Floor Number / Total Floors --}}
+                            @if($room->feature('floor_no') !== null || $room->feature('total_floors') !== null)
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Floor</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">
+                                        {{ $room->feature('floor_no') !== null ? ($room->feature('floor_no') == 0 ? 'Ground' : $room->feature('floor_no') . 'th') : '—' }}
+                                        @if($room->feature('total_floors')) of {{ $room->feature('total_floors') }} Floors @endif
+                                    </span>
+                                </div>
+                            @endif
                         @endif
 
                         {{-- Facing / Vastu --}}
@@ -390,6 +427,14 @@
                             <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
                                 <span class="text-slate-400 block font-medium uppercase text-[10px]">Facing / Vastu</span>
                                 <span class="font-extrabold text-slate-900 text-sm">{{ $room->feature('facing') }} Facing</span>
+                            </div>
+                        @endif
+
+                        {{-- Gated Community / Boundary Wall --}}
+                        @if($room->feature('gated_community'))
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                <span class="text-slate-400 block font-medium uppercase text-[10px]">Security</span>
+                                <span class="font-extrabold text-slate-900 text-sm">Gated Society / Boundary</span>
                             </div>
                         @endif
 
@@ -409,7 +454,7 @@
                             </div>
                         @endif
 
-                        {{-- Possession Date / Age --}}
+                        {{-- Possession Date / Age / Sell Specific Attributes --}}
                         @if($room->isForSell())
                             @if($room->feature('property_age'))
                                 <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
@@ -432,6 +477,13 @@
                                 </div>
                             @endif
 
+                            @if($room->feature('price_negotiable'))
+                                <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                                    <span class="text-emerald-600 block font-medium uppercase text-[10px]">Price Negotiation</span>
+                                    <span class="font-extrabold text-emerald-900 text-sm">Negotiable</span>
+                                </div>
+                            @endif
+
                             @if($room->feature('is_bank_loan_approved'))
                                 <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
                                     <span class="text-emerald-600 block font-medium uppercase text-[10px]">Bank Loan</span>
@@ -447,6 +499,13 @@
                             @endif
                         @else
                             {{-- Rent Specific Attributes --}}
+                            @if($room->feature('available_from'))
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                    <span class="text-slate-400 block font-medium uppercase text-[10px]">Available From</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">{{ date('d M, Y', strtotime($room->feature('available_from'))) }}</span>
+                                </div>
+                            @endif
+
                             @if($room->feature('maintenance_charges'))
                                 <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60">
                                     <span class="text-slate-400 block font-medium uppercase text-[10px]">Maintenance</span>
@@ -891,11 +950,11 @@
                                            target="_blank"
                                            class="text-slate-800 font-semibold flex items-center gap-2 hover:text-indigo-600 transition group text-sm">
                                             <i class="fas fa-location-dot text-indigo-500"></i>
-                                            <span class="group-hover:underline">{{ $room->address }}, {{ $room->city }}</span>
+                                            <span class="group-hover:underline">{{ $room->address }}, {{ $room->city }}@if($room->feature('pincode')) - {{ $room->feature('pincode') }}@endif</span>
                                             <i class="fas fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-indigo-600"></i>
                                         </a>
                                     @else
-                                        <p class="text-sm text-slate-700"><i class="fas fa-location-dot text-indigo-500 mr-2"></i>{{ $room->address }}, {{ $room->city }}</p>
+                                        <p class="text-sm text-slate-700"><i class="fas fa-location-dot text-indigo-500 mr-2"></i>{{ $room->address }}, {{ $room->city }}@if($room->feature('pincode')) - {{ $room->feature('pincode') }}@endif</p>
                                     @endif
                                 </div>
                             @endif

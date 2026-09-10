@@ -366,13 +366,14 @@ class RoomController extends Controller {
             $amenities = ['High-speed WiFi', 'Car & Bike Parking', 'Air Conditioner', 'Power Backup', 'Lift / Elevator', '24x7 Security Guard', 'CCTV Surveillance', '24hr Water Supply', 'Fitness Gym', 'Swimming Pool', 'Club House', 'Park / Green Area', 'Fire Safety', 'Piped Gas (PNG)'];
         }
 
+        $roomTypeOptions = \App\Models\RoomOption::optionsFor('room_type');
         $furnishingOptions = \App\Models\RoomOption::optionsFor('furnishing_type');
         $tenantOptions = \App\Models\RoomOption::optionsFor('tenant_type');
 
         $storeRoute = route('owner.rooms.store');
         $draftsIndex = route('owner.rooms.drafts');
 
-        return view('owner.rooms.create-multistep', compact('propertyTypes', 'amenities', 'furnishingOptions', 'tenantOptions', 'storeRoute', 'draftsIndex'));
+        return view('owner.rooms.create-multistep', compact('propertyTypes', 'amenities', 'roomTypeOptions', 'furnishingOptions', 'tenantOptions', 'storeRoute', 'draftsIndex'));
     }
 
     /**
@@ -388,16 +389,21 @@ class RoomController extends Controller {
             'description'           => 'nullable|string',
             'property_type_id'      => ['required', 'integer', Rule::exists('property_types', 'id')->where('status', true)],
             'property_category_id'  => ['nullable', 'integer', Rule::exists('property_categories', 'id')->where('status', true)],
+            'room_type'             => ['nullable'],
             'purpose'               => 'required|in:rent,sell',
             'rent'                  => 'required_if:purpose,rent|nullable|numeric|min:0',
             'price'                 => 'required_if:purpose,sell|nullable|numeric|min:0',
             'deposit'               => 'nullable|numeric|min:0',
             'area_sqft'             => 'nullable|numeric|min:0',
             'possession_status'     => 'nullable|in:ready_to_move,under_construction',
+            'ownership_type'        => 'nullable|string|max:100',
             'city'                  => 'required|string',
             'state'                 => 'nullable|string',
             'country'               => 'nullable|string',
+            'pincode'               => 'nullable|string|max:20',
+            'available_from'        => 'nullable|string|max:30',
             'address'               => 'nullable|string',
+            'landmark'              => 'nullable|string|max:255',
             'latitude'              => 'nullable|numeric',
             'longitude'             => 'nullable|numeric',
             'furnishing_type'       => ['nullable'],
@@ -429,6 +435,7 @@ class RoomController extends Controller {
             'ownership_type', 'rera_id', 'commercial_type', 'frontage_width_ft',
             'washroom_type', 'power_backup', 'suitable_for', 'maintenance_charges',
             'maintenance_type', 'lockin_period_months', 'notice_period_days', 'food_preference',
+            'pincode', 'available_from', 'room_type',
             ...$booleanFeatureKeys,
         ];
 
@@ -447,6 +454,27 @@ class RoomController extends Controller {
         // Synchronize rent/price for backward-compatible queries when purpose is sell
         if (($data['purpose'] ?? ($existingRoom?->purpose ?? 'rent')) === 'sell') {
             $data['rent'] = !empty($data['rent']) ? $data['rent'] : ($data['price'] ?? $existingRoom?->rent ?? 0);
+        }
+
+        // Ownership type (mirrored on column and feature)
+        if (!empty($req->input('ownership_type'))) {
+            $data['ownership_type'] = $req->input('ownership_type');
+        } elseif (!empty($features['ownership_type'])) {
+            $data['ownership_type'] = $features['ownership_type'];
+        }
+
+        // Handle landmarks: accept both array 'landmarks' and single text 'landmark'
+        $landmarks = [];
+        if ($req->has('landmarks') && is_array($req->input('landmarks'))) {
+            $landmarks = array_values(array_filter(array_map('trim', $req->input('landmarks'))));
+        } elseif ($req->filled('landmark')) {
+            $parts = explode(',', $req->input('landmark'));
+            $landmarks = array_values(array_filter(array_map('trim', $parts)));
+        }
+        if (!empty($landmarks)) {
+            $data['landmarks'] = $landmarks;
+        } elseif ($existingRoom?->landmarks) {
+            $data['landmarks'] = $existingRoom->landmarks;
         }
 
         // Clean coordinates
@@ -965,10 +993,11 @@ class RoomController extends Controller {
             $amenities = ['High-speed WiFi', 'Car & Bike Parking', 'Air Conditioner', 'Power Backup', 'Lift / Elevator', '24x7 Security Guard', 'CCTV Surveillance', '24hr Water Supply', 'Fitness Gym', 'Swimming Pool', 'Club House', 'Park / Green Area', 'Fire Safety', 'Piped Gas (PNG)'];
         }
 
+        $roomTypeOptions = \App\Models\RoomOption::optionsFor('room_type');
         $furnishingOptions = \App\Models\RoomOption::optionsFor('furnishing_type');
         $tenantOptions = \App\Models\RoomOption::optionsFor('tenant_type');
 
-        return view('owner.rooms.edit', compact('room', 'propertyTypes', 'amenities', 'furnishingOptions', 'tenantOptions'));
+        return view('owner.rooms.edit', compact('room', 'propertyTypes', 'amenities', 'roomTypeOptions', 'furnishingOptions', 'tenantOptions'));
     }
 
     public function update(Request $req, Room $room) {

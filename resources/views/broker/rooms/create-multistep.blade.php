@@ -7,8 +7,8 @@
     {{-- Header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-black text-slate-900">Post Your Property</h1>
-            <p class="text-sm text-slate-500 mt-1">Fill the steps below. Your progress is auto-saved.</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Post New Property</h1>
+            <p class="text-sm text-slate-500 mt-1">List residential, commercial, or plot properties for Rent or Sale.</p>
         </div>
         <a href="{{ $draftsIndex ?? route('agent.rooms.drafts') }}" class="hidden sm:inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700">
             <i class="fas fa-folder-open"></i> My Drafts
@@ -33,10 +33,10 @@
     </div>
 
     {{-- Stepper --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4 sticky top-0 z-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4 sticky top-0 z-20">
         <div class="flex items-center justify-between gap-1 overflow-x-auto" id="stepper">
             @for ($i = 1; $i <= 6; $i++)
-                <button type="button" class="step-btn flex flex-col items-center gap-1 min-w-[80px] flex-1 py-2 transition-all" data-step="{{ $i }}">
+                <button type="button" class="step-btn flex flex-col items-center gap-1 min-w-[70px] flex-1 py-1 transition-all" data-step="{{ $i }}">
                     <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 border-slate-200 bg-white text-slate-400 step-circle transition-all">
                         {{ $i }}
                     </div>
@@ -44,7 +44,7 @@
                         @switch($i)
                             @case(1) Basic @break
                             @case(2) Location @break
-                            @case(3) Details @break
+                            @case(3) Specs @break
                             @case(4) Amenities @break
                             @case(5) Pricing @break
                             @case(6) Review @break
@@ -64,56 +64,107 @@
             <span id="saveSpinner" class="hidden"><i class="fas fa-circle-notch fa-spin text-indigo-500"></i></span>
             <span id="saveStatus">All changes saved</span>
         </div>
-        <div class="text-slate-400">
+        <div class="text-slate-400 font-bold">
             Step <span id="currentStepLabel">1</span> of 6
         </div>
     </div>
 
     {{-- Form --}}
-    <form id="multiStepForm" method="POST" action="{{ $storeRoute ?? route('agent.rooms.store') }}" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <form id="multiStepForm" method="POST" action="{{ $storeRoute ?? route('agent.rooms.store') }}" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7">
         @csrf
         <input type="hidden" name="draft_id" id="draft_id" value="">
 
         {{-- ========== STEP 1: BASIC DETAILS ========== --}}
         <div class="step-pane" data-step="1">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Basic Details</h2>
-            <p class="text-sm text-slate-500 mb-5">Tell us what you're listing</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1">Basic Property Information</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5">Select purpose and primary property category.</p>
 
-            <div class="space-y-4">
+            <div class="space-y-5">
+                {{-- Purpose Selector Cards --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Listing Purpose *</label>
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <label class="purpose-card relative flex items-center gap-3 p-4 rounded-2xl border-2 border-indigo-600 bg-indigo-50/40 cursor-pointer transition select-none">
+                            <input type="radio" name="purpose" value="rent" checked class="purpose-radio sr-only">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <i class="fas fa-key text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="block font-black text-slate-900 text-sm">Rent Out</span>
+                                <span class="block text-[11px] text-slate-500 font-medium truncate">Earn recurring monthly rent</span>
+                            </div>
+                            <div class="absolute top-3 right-3 text-indigo-600 purpose-check">
+                                <i class="fas fa-circle-check text-lg"></i>
+                            </div>
+                        </label>
+
+                        <label class="purpose-card relative flex items-center gap-3 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition select-none">
+                            <input type="radio" name="purpose" value="sell" class="purpose-radio sr-only">
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-tags text-base"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="block font-black text-slate-900 text-sm">Sell Property</span>
+                                <span class="block text-[11px] text-slate-500 font-medium truncate">Direct sale & genuine buyers</span>
+                            </div>
+                            <div class="absolute top-3 right-3 text-slate-300 purpose-check hidden">
+                                <i class="fas fa-circle-check text-lg"></i>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- Property Title --}}
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Title *</label>
-                    <input type="text" name="title" maxlength="120" placeholder="e.g. Spacious 2BHK Apartment in Indiranagar"
+                    <input type="text" name="title" maxlength="120" placeholder="e.g. Premium 3BHK Apartment in Indiranagar"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-medium">
                 </div>
 
+                {{-- Property Type & Category --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Type *</label>
-                        <select name="property_type_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="">-- Select --</option>
+                        <select name="property_type_id" id="propertyTypeSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                            <option value="">-- Select Property Type --</option>
                             @foreach($propertyTypes as $pt)
-                                <option value="{{ $pt->id }}">{{ $pt->name }}</option>
+                                <option value="{{ $pt->id }}" data-slug="{{ $pt->slug }}">{{ $pt->name }}</option>
                             @endforeach
                         </select>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Room Type *</label>
-                        <select name="room_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="">-- Select --</option>
-                            <option value="1RK">1 RK</option>
-                            <option value="1BHK">1 BHK</option>
-                            <option value="2BHK">2 BHK</option>
-                            <option value="3BHK">3 BHK</option>
-                            <option value="4BHK+">4 BHK+</option>
-                            <option value="PG">PG</option>
-                            <option value="Hostel">Hostel</option>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Sub-Category / Format</label>
+                        <select name="property_category_id" id="propertyCategorySelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                            <option value="">-- Select Category --</option>
                         </select>
                     </div>
                 </div>
 
+                {{-- Room / Space Subtype (Standard / 1BHK / etc) --}}
+                <div id="roomTypeContainer">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Room Configuration / Unit Type *</label>
+                    <select name="room_type" id="roomTypeSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        @if(isset($roomTypeOptions) && $roomTypeOptions->isNotEmpty())
+                            @foreach($roomTypeOptions as $opt)
+                                <option value="{{ $opt->id }}" {{ $opt->key === '2bhk' ? 'selected' : '' }}>{{ $opt->label }}</option>
+                            @endforeach
+                        @else
+                            <option value="1BHK">1 BHK</option>
+                            <option value="2BHK" selected>2 BHK</option>
+                            <option value="3BHK">3 BHK</option>
+                            <option value="4BHK+">4 BHK+</option>
+                            <option value="1RK">1 RK</option>
+                            <option value="Studio">Studio Apartment</option>
+                            <option value="PG">PG Unit</option>
+                        @endif
+                    </select>
+                </div>
+
+                {{-- Description --}}
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Description *</label>
-                    <textarea name="description" rows="4" maxlength="2000" placeholder="Describe your property, unique features, nearby facilities..."
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Description *</label>
+                    <textarea name="description" rows="4" maxlength="2000" placeholder="Provide details like ventilation, road connectivity, water availability, nearby hotspots..."
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm"></textarea>
                     <p class="text-[10px] text-slate-400 mt-1 text-right"><span id="descCount">0</span>/2000</p>
                 </div>
@@ -122,127 +173,253 @@
 
         {{-- ========== STEP 2: LOCATION ========== --}}
         <div class="step-pane hidden" data-step="2">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Location</h2>
-            <p class="text-sm text-slate-500 mb-5">Where is the property located?</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1">Property Location</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5">Accurate location helps verified buyers and tenants reach you.</p>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Full Address *</label>
-                    <input type="text" name="address" id="location_address" placeholder="House no, building, street, area"
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Complete Address *</label>
+                    <input type="text" name="address" id="location_address" placeholder="Flat/Shop no., Building name, Street, Landmark"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">City *</label>
-                        <input type="text" name="city" id="cityInput" placeholder="City"
+                        <input type="text" name="city" id="cityInput" placeholder="e.g. Bangalore"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">State *</label>
-                        <input type="text" name="state" id="stateInput" placeholder="State"
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">State</label>
+                        <input type="text" name="state" id="stateInput" placeholder="e.g. Karnataka"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Pincode *</label>
-                        <input type="text" name="pincode" pattern="[0-9]{6}" placeholder="6-digit pincode"
+                        <input type="text" name="pincode" maxlength="10" placeholder="e.g. 560038"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Landmark (optional)</label>
-                    <input type="text" name="landmark" placeholder="Near metro station, mall, hospital..."
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
-                </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Latitude</label>
-                        <input type="text" name="latitude" id="latitude" readonly placeholder="Click on map to set"
-                            class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-mono">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Major Landmark</label>
+                        <input type="text" name="landmark" placeholder="e.g. Near Metro Station / Behind Mall"
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Longitude</label>
-                        <input type="text" name="longitude" id="longitude" readonly placeholder="Click on map to set"
-                            class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-mono">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Country</label>
+                        <input type="text" name="country" value="India" readonly
+                            class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 cursor-not-allowed">
                     </div>
                 </div>
 
-                <div id="miniMap" class="w-full h-48 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-sm text-slate-400">
-                    <i class="fas fa-map-marked-alt mr-2"></i> Map will load here (optional - skip if not needed)
+                {{-- Map Pinning Optional Coordinates --}}
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Latitude (optional)</label>
+                        <input type="text" name="latitude" id="latitude" placeholder="e.g. 12.9716"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Longitude (optional)</label>
+                        <input type="text" name="longitude" id="longitude" placeholder="e.g. 77.5946"
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- ========== STEP 3: PROPERTY DETAILS ========== --}}
+        {{-- ========== STEP 3: SPECS & DIMENSIONS ========== --}}
         <div class="step-pane hidden" data-step="3">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Property Details</h2>
-            <p class="text-sm text-slate-500 mb-5">Specifications and dimensions</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1">Property Specifications</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5">Exact measurements and physical layout details.</p>
 
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Furnishing *</label>
-                        <select name="furnishing_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="">-- Select --</option>
-                            <option value="Fully Furnished">Fully Furnished</option>
-                            <option value="Semi Furnished">Semi Furnished</option>
-                            <option value="Unfurnished">Unfurnished</option>
-                        </select>
+            <div class="space-y-5">
+                {{-- RESIDENTIAL SPECIFICATIONS --}}
+                <div id="residentialSpecsGroup" class="space-y-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Bathrooms *</label>
+                            <input type="number" name="bathrooms" min="0" max="20" value="2"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Balconies</label>
+                            <input type="number" name="balconies" min="0" max="10" value="1"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Floor No</label>
+                            <input type="number" name="floor_no" min="-2" max="150" placeholder="e.g. 4"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Total Floors</label>
+                            <input type="number" name="total_floors" min="0" max="150" placeholder="e.g. 12"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Preferred Tenant *</label>
-                        <select name="tenant_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="">-- Select --</option>
-                            <option value="Family">Family</option>
-                            <option value="Bachelor">Bachelor</option>
-                            <option value="Girls">Girls</option>
-                            <option value="Boys">Boys</option>
-                            <option value="Anyone">Anyone</option>
-                        </select>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Carpet Area (sq ft) *</label>
+                            <input type="number" name="carpet_area" min="0" placeholder="e.g. 850"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Super Built-up Area</label>
+                            <input type="number" name="super_builtup_area" min="0" placeholder="e.g. 1100"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Built-up Area (sq ft)</label>
+                            <input type="number" name="area_sqft" min="0" placeholder="e.g. 950"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Facing / Vastu</label>
+                            <select name="facing" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="">Select Facing</option>
+                                <option value="East">East</option>
+                                <option value="North">North</option>
+                                <option value="North-East">North-East</option>
+                                <option value="West">West</option>
+                                <option value="South">South</option>
+                                <option value="North-West">North-West</option>
+                                <option value="South-East">South-East</option>
+                                <option value="South-West">South-West</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Parking Type</label>
+                            <select name="parking_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="">Select Parking</option>
+                                <option value="Covered Car + Bike">Covered Car + Bike</option>
+                                <option value="Open Car Parking">Open Car Parking</option>
+                                <option value="Bike Only">Bike Only</option>
+                                <option value="No Parking">No Parking</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Water Supply</label>
+                            <select name="water_supply" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="">Select Water Supply</option>
+                                <option value="24 Hours Corporation">24 Hours Corporation</option>
+                                <option value="Borewell Supply">Borewell Supply</option>
+                                <option value="Both Corporation & Borewell">Both Corporation & Borewell</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Floor</label>
-                        <input type="number" name="floor" min="0" max="100" placeholder="0"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                {{-- COMMERCIAL SPECIFICATIONS --}}
+                <div id="commercialSpecsGroup" class="hidden space-y-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-200">
+                    <div class="flex items-center gap-2 text-amber-900 font-bold text-sm">
+                        <i class="fas fa-briefcase"></i> Commercial & Business Details
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Total Floors</label>
-                        <input type="number" name="total_floors" min="0" max="100" placeholder="0"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Commercial Format</label>
+                            <select name="commercial_type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="Retail Shop">Retail Shop</option>
+                                <option value="Showroom">Showroom</option>
+                                <option value="Office Space">Corporate Office Space</option>
+                                <option value="Warehouse">Warehouse / Godown</option>
+                                <option value="Co-working Space">Co-working Space</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Road Frontage (Feet)</label>
+                            <input type="number" name="frontage_width_ft" min="0" placeholder="e.g. 25"
+                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Washroom Facility</label>
+                            <select name="washroom_type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="Private Washroom">Private Washroom Attached</option>
+                                <option value="Shared Washroom">Shared Complex Washroom</option>
+                                <option value="No Washroom">No Washroom</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Bathrooms</label>
-                        <input type="number" name="bathrooms" min="0" max="10" placeholder="1"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Main Road Facing?</label>
+                            <select name="is_main_road_facing" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="1">Yes (Prime Visibility)</option>
+                                <option value="0">No (Inside Lane/Complex)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Corner Property?</label>
+                            <select name="is_corner_property" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="0">No</option>
+                                <option value="1">Yes (2 Sides Open)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Power Backup</label>
+                            <select name="power_backup" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="Full DG Backup">100% Full DG Backup</option>
+                                <option value="Partial Backup">Partial Backup</option>
+                                <option value="Inverter Backup">Inverter Backup</option>
+                                <option value="None">None</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Balconies</label>
-                        <input type="number" name="balconies" min="0" max="10" placeholder="1"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Suitable Businesses / Tenants</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            @foreach(['Retail Shop', 'Doctor Clinic', 'IT Office', 'Restaurant / Cafe', 'Gym & Fitness', 'Coaching Center', 'Salon / Spa', 'Storage Godown'] as $biz)
+                                <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-amber-100/40">
+                                    <input type="checkbox" name="suitable_for[]" value="{{ $biz }}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                    <span class="font-medium text-slate-700">{{ $biz }}</span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Built-up Area (sq ft)</label>
-                        <input type="number" name="built_up_area" min="0" placeholder="e.g. 850"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                {{-- PLOT / LAND SPECIFICATIONS --}}
+                <div id="plotSpecsGroup" class="hidden space-y-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200">
+                    <div class="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                        <i class="fas fa-layer-group"></i> Plot & Land Dimensions
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Carpet Area (sq ft)</label>
-                        <input type="number" name="carpet_area" min="0" placeholder="e.g. 700"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Plot Area</label>
+                            <input type="number" name="plot_area" min="0" placeholder="e.g. 1500"
+                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Measurement Unit</label>
+                            <select name="plot_area_unit" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="sqft">Square Feet (Sq.Ft)</option>
+                                <option value="sqyd">Square Yards (Sq.Yards)</option>
+                                <option value="gaj">Gaj</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Boundary Wall</label>
+                            <select name="gated_community" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="1">Yes (Boundary Built)</option>
+                                <option value="0">No Boundary</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Available From *</label>
-                    <input type="date" name="available_from" min="{{ date('Y-m-d') }}"
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Available From Date *</label>
+                    <input type="date" name="available_from" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
                 </div>
             </div>
@@ -250,15 +427,15 @@
 
         {{-- ========== STEP 4: AMENITIES & RULES ========== --}}
         <div class="step-pane hidden" data-step="4">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Amenities & Rules</h2>
-            <p class="text-sm text-slate-500 mb-5">What does your property offer?</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1" id="step4Title">Amenities & Tenant Preferences</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5" id="step4Subtitle">Select facilities provided and preferred occupant guidelines.</p>
 
             <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Amenities</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Amenities & Features</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         @foreach($amenities as $amenity)
-                            <label class="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition text-xs font-semibold text-slate-700">
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer transition text-xs font-semibold text-slate-700">
                                 <input type="checkbox" name="amenities[]" value="{{ $amenity }}" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 shrink-0">
                                 <span>{{ $amenity }}</span>
                             </label>
@@ -266,113 +443,216 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Pets Allowed?</label>
-                        <select name="pets_allowed" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="0">No</option>
-                            <option value="1">Yes</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Smoking/Drinking?</label>
-                        <select name="smoking_drinking" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                            <option value="Not Allowed">Not Allowed</option>
-                            <option value="Allowed">Allowed</option>
-                            <option value="Outside Only">Outside Only</option>
-                        </select>
-                    </div>
+                {{-- Furnishing status: applies to residential flats/villas (both rent & sell) --}}
+                <div id="furnishingContainer">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Furnishing Status *</label>
+                    <select name="furnishing_type" id="furnishingSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        @if(isset($furnishingOptions) && $furnishingOptions->isNotEmpty())
+                            @foreach($furnishingOptions as $opt)
+                                <option value="{{ $opt->id }}" {{ in_array($opt->key, ['semi-furnished', 'semi_furnished']) ? 'selected' : '' }}>{{ $opt->label }}</option>
+                            @endforeach
+                        @else
+                            <option value="Semi Furnished" selected>Semi Furnished</option>
+                            <option value="Fully Furnished">Fully Furnished</option>
+                            <option value="Unfurnished">Unfurnished</option>
+                        @endif
+                    </select>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Entry Time Restrictions</label>
-                    <input type="text" name="entry_time" placeholder="e.g. No restrictions / 10 PM to 6 AM"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
+                {{-- Tenant guidelines (Applies ONLY to Rent; hidden when Purpose = Sell) --}}
+                <div id="rentalPreferencesGroup" class="space-y-4 p-4 rounded-2xl bg-indigo-50/40 border border-indigo-100">
+                    <div class="text-xs font-bold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                        <i class="fas fa-users text-indigo-600"></i> Tenant & Occupancy Guidelines (For Rent Only)
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Preferred Occupants / Tenants</label>
+                            <select name="tenant_type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                @if(isset($tenantOptions) && $tenantOptions->isNotEmpty())
+                                    @foreach($tenantOptions as $opt)
+                                        <option value="{{ $opt->id }}" {{ $opt->key === 'any' ? 'selected' : '' }}>{{ $opt->label }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="Anyone" selected>Anyone (Family, Bachelor, Company)</option>
+                                    <option value="Family">Family Only</option>
+                                    <option value="Bachelor">Bachelor Only</option>
+                                    <option value="Girls">Girls / Females Only</option>
+                                    <option value="Boys">Boys Only</option>
+                                    <option value="Company / Corporate">Company / Corporate Lease</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Food Preference</label>
+                            <select name="food_preference" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="No Preference">No Food Restriction (All Allowed)</option>
+                                <option value="Vegetarian Only">Pure Vegetarian Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Pet Friendly?</label>
+                            <select name="pet_friendly" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                                <option value="1">Yes (Pets Allowed)</option>
+                                <option value="0" selected>No Pets Allowed</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         {{-- ========== STEP 5: PRICING & MEDIA ========== --}}
         <div class="step-pane hidden" data-step="5">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Pricing & Photos</h2>
-            <p class="text-sm text-slate-500 mb-5">Set your price and add photos</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1">Pricing, Terms & Media</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5">Set realistic pricing and upload attractive images.</p>
 
             <div class="space-y-5">
-                <!-- Purpose Toggle -->
-                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Listing Purpose *</label>
-                    <div class="flex items-center gap-6">
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="purpose" value="rent" checked class="broker-purpose-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500">
-                            <span class="text-sm font-bold text-slate-800"><i class="fas fa-key text-indigo-500 mr-1"></i> For Rent</span>
-                        </label>
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="purpose" value="sell" class="broker-purpose-radio h-4 w-4 text-purple-600 focus:ring-purple-500">
-                            <span class="text-sm font-bold text-slate-800"><i class="fas fa-tag text-purple-500 mr-1"></i> For Sale / Buy</span>
-                        </label>
+                {{-- RENT PRICING SECTION --}}
+                <div id="rentPricingGroup" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Monthly Rent (₹) *</label>
+                            <input type="number" name="rent" id="rentInput" min="0" placeholder="e.g. 18000"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-black text-indigo-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Security Deposit (₹)</label>
+                            <input type="number" name="deposit" min="0" placeholder="e.g. 36000"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Maintenance (₹/mo)</label>
+                            <input type="number" name="maintenance_charges" min="0" placeholder="e.g. 1500"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Maintenance Status</label>
+                            <select name="maintenance_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                                <option value="extra">Extra (Not in Rent)</option>
+                                <option value="included">Included in Monthly Rent</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Lock-in Period (Months)</label>
+                            <input type="number" name="lockin_period_months" min="0" placeholder="e.g. 6"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Notice Period (Days)</label>
+                            <input type="number" name="notice_period_days" min="0" placeholder="e.g. 30"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 transition text-sm font-semibold">
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div id="brokerRentField">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Monthly Rent (₹) *</label>
-                        <input type="number" name="rent" id="broker_rent_input" min="0" placeholder="e.g. 15000"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-bold">
+                {{-- SELL PRICING SECTION --}}
+                <div id="sellPricingGroup" class="hidden space-y-4 p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200">
+                    <div class="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                        <i class="fas fa-hand-holding-dollar"></i> Sale Pricing & Ownership Credentials
                     </div>
-                    <div id="brokerPriceField" class="hidden">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Total Sale Price (₹) *</label>
-                        <input type="number" name="price" id="broker_price_input" min="0" placeholder="e.g. 4500000"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-bold">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Expected Sale Price (₹) *</label>
+                            <input type="number" name="price" id="priceInput" min="0" placeholder="e.g. 4500000"
+                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition text-sm font-black text-emerald-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Price Negotiable?</label>
+                            <select name="price_negotiable" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                                <option value="1">Yes (Slightly Negotiable)</option>
+                                <option value="0">Fixed Price (Non-Negotiable)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Possession Status *</label>
+                            <select name="possession_status" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                                <option value="ready_to_move">Ready to Move</option>
+                                <option value="under_construction">Under Construction</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="brokerPossessionField" class="hidden">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Possession Status</label>
-                        <select name="possession_status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-semibold">
-                            <option value="">-- Select --</option>
-                            <option value="ready_to_move">Ready to Move</option>
-                            <option value="under_construction">Under Construction</option>
-                        </select>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Possession Date / Target</label>
+                            <input type="text" name="possession_date" placeholder="e.g. Immediate / Dec 2026"
+                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Age</label>
+                            <select name="property_age" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                                <option value="Brand New">Brand New / Under Construction</option>
+                                <option value="0-1 Year">0 to 1 Year Old</option>
+                                <option value="1-5 Years">1 to 5 Years Old</option>
+                                <option value="5-10 Years">5 to 10 Years Old</option>
+                                <option value="10+ Years">10+ Years Old</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Ownership Title</label>
+                            <select name="ownership_type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                                <option value="Freehold">Freehold Title</option>
+                                <option value="Leasehold">Leasehold</option>
+                                <option value="Co-operative Society">Co-operative Society</option>
+                                <option value="Power of Attorney">Power of Attorney (POA)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="brokerOwnershipField" class="hidden">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Ownership Type</label>
-                        <select name="ownership_type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition text-sm font-semibold">
-                            <option value="freehold">Freehold</option>
-                            <option value="leasehold">Leasehold</option>
-                            <option value="power_of_attorney">Power of Attorney</option>
-                            <option value="cooperative_society">Cooperative Society</option>
-                        </select>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">RERA Registered ID (optional)</label>
+                            <input type="text" name="rera_id" placeholder="e.g. P52100012345"
+                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Bank Loan Approved?</label>
+                            <select name="is_bank_loan_approved" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 transition text-sm font-semibold">
+                                <option value="1">Yes (Loan Available from Leading Banks)</option>
+                                <option value="0">No / Pending Approval</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="brokerDepositField">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Security Deposit (₹)</label>
-                        <input type="number" name="deposit" min="0" placeholder="e.g. 30000"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                    </div>
+                </div>
+
+                {{-- Listing Type & Broker Fee --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Maintenance (₹/mo)</label>
-                        <input type="number" name="maintenance" min="0" placeholder="e.g. 1500"
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Listing Role</label>
+                        <select name="listing_type" id="listingTypeSelect" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
+                            <option value="broker" selected>Verified Agent / Broker Listing</option>
+                            <option value="owner">Direct Owner Property</option>
+                        </select>
+                    </div>
+                    <div id="brokerFeeField">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Brokerage / Commission (₹)</label>
+                        <input type="number" name="broker_fee" min="0" placeholder="e.g. 15000 (0 for Zero Brokerage)"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
                     </div>
                 </div>
 
+                {{-- Photos Upload --}}
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Brokerage Fee (₹)</label>
-                    <input type="number" name="broker_fee" min="0" placeholder="Leave 0 if no brokerage"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm font-semibold">
-                    <p class="text-[10px] text-slate-400 mt-1">Payable only after deal finalization</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Photos *</label>
-                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" id="photoDropZone">
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Property Photos * (At least 1 photo)</label>
+                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer" id="photoDropZone">
                         <input type="file" name="photos[]" id="photoInput" accept="image/*" multiple class="hidden">
-                        <i class="fas fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-                        <p class="text-sm font-bold text-slate-700">Click or drag photos here</p>
-                        <p class="text-xs text-slate-500 mt-1">JPG, PNG up to 5MB each. First photo will be the cover.</p>
+                        <div class="w-12 h-12 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                            <i class="fas fa-cloud-arrow-up text-xl"></i>
+                        </div>
+                        <p class="text-sm font-bold text-slate-800">Click to browse or drag photos here</p>
+                        <p class="text-xs text-slate-500 mt-1">High quality photos attract 3x more inquiries. First photo becomes the cover.</p>
                     </div>
-                    <div id="photoPreview" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-3"></div>
+                    <div id="photoPreview" class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-3"></div>
                 </div>
 
+                {{-- Video URL --}}
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Video URL (optional)</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">YouTube / Walkthrough Video URL (optional)</label>
                     <input type="url" name="video_url" placeholder="https://www.youtube.com/watch?v=..."
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
                 </div>
@@ -381,26 +661,26 @@
 
         {{-- ========== STEP 6: REVIEW ========== --}}
         <div class="step-pane hidden" data-step="6">
-            <h2 class="text-lg font-black text-slate-900 mb-1">Review & Publish</h2>
-            <p class="text-sm text-slate-500 mb-5">Check everything before publishing</p>
+            <h2 class="text-lg font-black text-slate-900 mb-1">Review & Publish Listing</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mb-5">Review all entered parameters before publishing.</p>
 
             <div id="reviewSummary" class="space-y-4">
                 <div class="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 text-center">
-                    <i class="fas fa-info-circle text-indigo-500 mr-1"></i> Fill the previous steps to see a summary here.
+                    <i class="fas fa-info-circle text-indigo-500 mr-1"></i> Summary will render dynamically.
                 </div>
             </div>
 
             <div class="mt-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
                 <p class="text-xs text-emerald-800 font-semibold flex items-center gap-2">
-                    <i class="fas fa-shield-check text-emerald-600"></i>
-                    After publishing, your property will be reviewed by our team and go live within 2-4 hours.
+                    <i class="fas fa-shield-check text-emerald-600 text-base shrink-0"></i>
+                    Your listing will be verified by our team and published to thousands of active seekers instantly.
                 </p>
             </div>
         </div>
 
         {{-- ========== NAVIGATION ========== --}}
-        <div class="flex items-center justify-between mt-6 pt-5 border-t border-slate-200">
-            <button type="button" id="prevBtn" class="hidden px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50 transition inline-flex items-center gap-2">
+        <div class="flex items-center justify-between mt-8 pt-5 border-t border-slate-200">
+            <button type="button" id="prevBtn" class="hidden px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50 transition inline-flex items-center gap-2">
                 <i class="fas fa-arrow-left text-xs"></i> Back
             </button>
 
@@ -409,10 +689,10 @@
             </button>
 
             <div class="flex gap-2">
-                <button type="button" id="nextBtn" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition inline-flex items-center gap-2 shadow-md">
+                <button type="button" id="nextBtn" class="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition inline-flex items-center gap-2 shadow-md">
                     Next <i class="fas fa-arrow-right text-xs"></i>
                 </button>
-                <button type="submit" id="publishBtn" class="hidden px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition inline-flex items-center gap-2 shadow-md">
+                <button type="submit" id="publishBtn" class="hidden px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition inline-flex items-center gap-2 shadow-md">
                     <i class="fas fa-rocket text-xs"></i> Publish Property
                 </button>
             </div>
@@ -431,6 +711,8 @@
 </style>
 
 <script>
+window.PROPERTY_CATALOG = @json($propertyTypes);
+
 (function() {
     'use strict';
     const TOTAL_STEPS = 6;
@@ -445,6 +727,121 @@
 
     function $(id) { return document.getElementById(id); }
 
+    // --- Purpose Card Selection Handling ---
+    function updatePurposeCards() {
+        const selectedPurpose = document.querySelector('input[name="purpose"]:checked')?.value || 'rent';
+        const isSell = (selectedPurpose === 'sell');
+
+        document.querySelectorAll('.purpose-card').forEach(card => {
+            const radio = card.querySelector('input[name="purpose"]');
+            const iconWrap = card.querySelector('div:first-of-type');
+            const checkIcon = card.querySelector('.purpose-check');
+
+            if (radio.value === selectedPurpose) {
+                card.classList.add('border-indigo-600', 'bg-indigo-50/40');
+                card.classList.remove('border-slate-200', 'bg-white');
+                iconWrap.classList.add('bg-indigo-600', 'text-white');
+                iconWrap.classList.remove('bg-slate-100', 'text-slate-600');
+                if (checkIcon) checkIcon.classList.remove('hidden');
+            } else {
+                card.classList.remove('border-indigo-600', 'bg-indigo-50/40');
+                card.classList.add('border-slate-200', 'bg-white');
+                iconWrap.classList.remove('bg-indigo-600', 'text-white');
+                iconWrap.classList.add('bg-slate-100', 'text-slate-600');
+                if (checkIcon) checkIcon.classList.add('hidden');
+            }
+        });
+
+        // Toggle Pricing Sections
+        const rentPricing = $('rentPricingGroup');
+        const sellPricing = $('sellPricingGroup');
+        if (rentPricing && sellPricing) {
+            rentPricing.classList.toggle('hidden', isSell);
+            sellPricing.classList.toggle('hidden', !isSell);
+        }
+
+        // Toggle Rental Preferences (Hide when Sell)
+        const rentalPreferences = $('rentalPreferencesGroup');
+        if (rentalPreferences) {
+            rentalPreferences.classList.toggle('hidden', isSell);
+        }
+
+        const step4Title = $('step4Title');
+        const step4Subtitle = $('step4Subtitle');
+        if (step4Title && step4Subtitle) {
+            if (isSell) {
+                step4Title.textContent = 'Amenities & Features';
+                step4Subtitle.textContent = 'Select society and property amenities.';
+            } else {
+                step4Title.textContent = 'Amenities & Tenant Preferences';
+                step4Subtitle.textContent = 'Select facilities provided and preferred occupant guidelines.';
+            }
+        }
+    }
+
+    document.querySelectorAll('.purpose-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const radio = card.querySelector('input[name="purpose"]');
+            if (radio) {
+                radio.checked = true;
+                updatePurposeCards();
+            }
+        });
+    });
+
+    // --- Property Type & Category Filtering ---
+    const typeSelect = $('propertyTypeSelect');
+    const categorySelect = $('propertyCategorySelect');
+
+    function syncPropertyTypes(selectedCategoryId = null) {
+        const typeId = parseInt(typeSelect.value, 10);
+        categorySelect.innerHTML = '<option value="">-- Select Category --</option>';
+
+        const selectedType = (window.PROPERTY_CATALOG || []).find(t => t.id === typeId);
+        const slug = selectedType ? selectedType.slug : '';
+
+        if (selectedType && selectedType.categories && selectedType.categories.length > 0) {
+            selectedType.categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                if (selectedCategoryId && parseInt(selectedCategoryId, 10) === cat.id) {
+                    opt.selected = true;
+                }
+                categorySelect.appendChild(opt);
+            });
+        }
+
+        // Check if commercial, plot or residential
+        const isCommercial = ['shop', 'office', 'showroom', 'warehouse'].includes(slug);
+        const isPlot = ['plot-land', 'plot', 'land'].includes(slug);
+        const selectedPurpose = document.querySelector('input[name="purpose"]:checked')?.value || 'rent';
+        const isSell = (selectedPurpose === 'sell');
+
+        $('commercialSpecsGroup').classList.toggle('hidden', !isCommercial);
+        $('plotSpecsGroup').classList.toggle('hidden', !isPlot);
+        $('residentialSpecsGroup').classList.toggle('hidden', isCommercial || isPlot);
+        $('roomTypeContainer').classList.toggle('hidden', isPlot);
+        
+        if ($('furnishingContainer')) {
+            $('furnishingContainer').classList.toggle('hidden', isPlot);
+        }
+        if ($('rentalPreferencesGroup')) {
+            $('rentalPreferencesGroup').classList.toggle('hidden', isPlot || isSell);
+        }
+    }
+
+    typeSelect.addEventListener('change', () => syncPropertyTypes());
+
+    // Listing Type Broker Toggle
+    const listingSelect = $('listingTypeSelect');
+    if (listingSelect) {
+        listingSelect.addEventListener('change', () => {
+            $('brokerFeeField').classList.toggle('hidden', listingSelect.value !== 'broker');
+        });
+    }
+
+    // --- Stepper Navigation ---
     function showStep(step) {
         document.querySelectorAll('.step-pane').forEach(p => p.classList.add('hidden'));
         document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
@@ -455,9 +852,19 @@
             const label = btn.querySelector('.step-label');
             circle.classList.remove('active', 'completed');
             label.classList.remove('active', 'completed');
-            if (num < step) { circle.classList.add('completed'); label.classList.add('completed'); circle.innerHTML = '<i class="fas fa-check text-[10px]"></i>'; }
-            else if (num === step) { circle.classList.add('active'); label.classList.add('active'); circle.innerHTML = num; }
-            else { circle.innerHTML = num; }
+            if (num < step) { 
+                circle.classList.add('completed'); 
+                label.classList.add('completed'); 
+                circle.innerHTML = '<i class="fas fa-check text-[10px]"></i>'; 
+            }
+            else if (num === step) { 
+                circle.classList.add('active'); 
+                label.classList.add('active'); 
+                circle.innerHTML = num; 
+            }
+            else { 
+                circle.innerHTML = num; 
+            }
         });
 
         for (let i = 1; i < TOTAL_STEPS; i++) {
@@ -519,14 +926,14 @@
             if (json.success) {
                 draftId = json.draft.id;
                 draftIdInput.value = draftId;
-                localStorage.setItem('room_draft_id', draftId);
+                localStorage.setItem('agent_room_draft_id', draftId);
                 const time = new Date(json.draft.last_saved_at).toLocaleTimeString();
                 setSaveStatus('All changes saved at ' + time, false);
             } else {
-                setSaveStatus('Save failed: ' + (json.message || 'unknown'), false);
+                setSaveStatus('Save failed', false);
             }
         } catch (err) {
-            setSaveStatus('Network error. Changes kept locally.', false);
+            setSaveStatus('Network error. Kept locally.', false);
             saveLocalOnly(step);
         } finally {
             isAutoSaving = false;
@@ -535,14 +942,13 @@
 
     function saveLocalOnly(step) {
         const data = collectStepData(step);
-        localStorage.setItem('room_draft_data', JSON.stringify({ step, data, ts: Date.now() }));
+        localStorage.setItem('agent_room_draft_data', JSON.stringify({ step, data, ts: Date.now() }));
     }
 
     function loadLocalBackup() {
         try {
-            const raw = localStorage.getItem('room_draft_data');
-            if (!raw) return null;
-            return JSON.parse(raw);
+            const raw = localStorage.getItem('agent_room_draft_data');
+            return raw ? JSON.parse(raw) : null;
         } catch { return null; }
     }
 
@@ -567,11 +973,13 @@
                 }
             }
         });
-        toggleBrokerPurpose();
+        updatePurposeCards();
+        if (data.property_type_id) {
+            syncPropertyTypes(data.property_category_id);
+        }
     }
 
     async function checkExistingDraft() {
-        const storedId = localStorage.getItem('room_draft_id');
         try {
             const res = await fetch('{{ route("agent.rooms.drafts.latest") }}', {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -602,14 +1010,14 @@
                     }
                 };
                 $('discardDraftBtn').onclick = async () => {
-                    if (!confirm('Delete this draft? This cannot be undone.')) return;
+                    if (!confirm('Discard this draft?')) return;
                     await fetch('{{ route("agent.rooms.drafts.destroy", ["id" => "__ID__"]) }}'.replace('__ID__', d.id), {
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
                         credentials: 'same-origin'
                     });
-                    localStorage.removeItem('room_draft_id');
-                    localStorage.removeItem('room_draft_data');
+                    localStorage.removeItem('agent_room_draft_id');
+                    localStorage.removeItem('agent_room_draft_data');
                     $('resumeBanner').classList.add('hidden');
                 };
             }
@@ -625,61 +1033,55 @@
         }
     }
 
-    function toggleBrokerPurpose() {
-        const purposeEl = form.querySelector('input[name="purpose"]:checked');
-        const isSell = purposeEl && purposeEl.value === 'sell';
-        const rentField = $('brokerRentField');
-        const priceField = $('brokerPriceField');
-        const possessionField = $('brokerPossessionField');
-        const ownershipField = $('brokerOwnershipField');
-        const depositField = $('brokerDepositField');
-
-        if (rentField) rentField.classList.toggle('hidden', isSell);
-        if (priceField) priceField.classList.toggle('hidden', !isSell);
-        if (possessionField) possessionField.classList.toggle('hidden', !isSell);
-        if (ownershipField) ownershipField.classList.toggle('hidden', !isSell);
-        if (depositField) depositField.classList.toggle('hidden', isSell);
-    }
-
     function renderReview() {
         const data = collectStepData(TOTAL_STEPS);
         const isSell = (data.purpose === 'sell');
         const rows = [
-            ['Listing Purpose', isSell ? 'For Sale / Buy' : 'For Rent'],
-            ['Title', data.title],
-            ['Address', data.address],
-            ['City', data.city],
-            isSell ? ['Sale Price', data.price ? '₹' + Number(data.price).toLocaleString('en-IN') : '—'] : ['Rent', data.rent ? '₹' + Number(data.rent).toLocaleString('en-IN') + ' / mo' : '—'],
-            isSell ? ['Possession', data.possession_status ? (data.possession_status === 'ready_to_move' ? 'Ready to Move' : 'Under Construction') : '—'] : ['Deposit', data.deposit ? '₹' + Number(data.deposit).toLocaleString('en-IN') : '—'],
-            ['Furnishing', data.furnishing_type],
+            ['Listing Purpose', isSell ? '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs">FOR SALE</span>' : '<span class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 font-black text-xs">FOR RENT</span>'],
+            ['Property Title', data.title],
+            ['City & Locality', (data.city || '') + (data.landmark ? ' (Near ' + data.landmark + ')' : '')],
+            ['Pricing', isSell ? ('₹' + (data.price ? Number(data.price).toLocaleString('en-IN') : '—')) : ('₹' + (data.rent ? Number(data.rent).toLocaleString('en-IN') + '/month' : '—'))],
+            ['Terms / Status', isSell ? (data.possession_status === 'ready_to_move' ? 'Ready to Move' : 'Under Construction') : ('Deposit: ₹' + (data.deposit || '0'))],
+            ['Furnishing', data.furnishing_type || '—'],
         ];
-        let html = '<div class="space-y-2 text-sm">';
+
+        if (isSell) {
+            rows.push(['Ownership Title', data.ownership_type || 'Freehold']);
+            if (data.property_age) rows.push(['Property Age', data.property_age]);
+            if (data.possession_date) rows.push(['Possession Target', data.possession_date]);
+            if (data.rera_id) rows.push(['RERA Registered ID', data.rera_id]);
+            rows.push(['Price Negotiable', data.price_negotiable == '1' ? 'Yes' : 'Fixed Price']);
+        } else {
+            rows.push(['Preferred Occupant', data.tenant_type || 'Anyone']);
+            if (data.maintenance_charges) rows.push(['Maintenance', '₹' + data.maintenance_charges + ' (' + (data.maintenance_type || 'extra') + ')']);
+            if (data.food_preference) rows.push(['Food Preference', data.food_preference]);
+            if (data.lockin_period_months) rows.push(['Lock-in Period', data.lockin_period_months + ' Months']);
+        }
+
+        let html = '<div class="bg-slate-50 rounded-2xl p-5 space-y-3">';
         rows.forEach(([k, v]) => {
-            html += `<div class="flex justify-between border-b border-slate-100 py-2"><span class="text-slate-500 font-semibold">${k}</span><span class="text-slate-900 font-bold">${v || '—'}</span></div>`;
+            html += `<div class="flex items-center justify-between border-b border-slate-200/60 pb-2 text-sm"><span class="text-slate-500 font-medium">${k}</span><span class="text-slate-900 font-bold">${v || '—'}</span></div>`;
         });
         html += '</div>';
         $('reviewSummary').innerHTML = html;
     }
 
     function validateAllSteps() {
-        const purposeEl = form.querySelector('input[name="purpose"]:checked');
-        const isSell = purposeEl && purposeEl.value === 'sell';
+        const purpose = document.querySelector('input[name="purpose"]:checked')?.value || 'rent';
         const requiredFields = [
             { step: 1, name: 'title',            label: 'Property Title' },
             { step: 1, name: 'property_type_id', label: 'Property Type' },
-            { step: 1, name: 'room_type',        label: 'Room Type' },
-            { step: 1, name: 'description',      label: 'Description (min 30 chars)', minlength: 30 },
-            { step: 2, name: 'address',          label: 'Full Address' },
+            { step: 1, name: 'description',      label: 'Description (min 20 chars)', minlength: 20 },
+            { step: 2, name: 'address',          label: 'Complete Address' },
             { step: 2, name: 'city',             label: 'City' },
-            { step: 2, name: 'state',            label: 'State' },
             { step: 2, name: 'pincode',          label: 'Pincode' },
-            { step: 3, name: 'furnishing_type',  label: 'Furnishing' },
-            { step: 3, name: 'tenant_type',      label: 'Preferred Tenant' },
-            { step: 3, name: 'available_from',   label: 'Available From' },
-            ...(isSell
-                ? [{ step: 5, name: 'price', label: 'Total Sale Price' }]
-                : [{ step: 5, name: 'rent',  label: 'Monthly Rent' }]),
         ];
+
+        if (purpose === 'sell') {
+            requiredFields.push({ step: 5, name: 'price', label: 'Expected Sale Price' });
+        } else {
+            requiredFields.push({ step: 5, name: 'rent', label: 'Monthly Rent' });
+        }
 
         const errors = [];
         requiredFields.forEach(f => {
@@ -688,20 +1090,20 @@
             const val = (el.value || '').toString().trim();
             if (!val) {
                 errors.push(`Step ${f.step}: ${f.label} is required`);
-                el.classList.add('ring-2', 'ring-rose-300');
+                el.classList.add('ring-2', 'ring-rose-400');
             } else if (f.minlength && val.length < f.minlength) {
                 errors.push(`Step ${f.step}: ${f.label} must be at least ${f.minlength} characters`);
-                el.classList.add('ring-2', 'ring-rose-300');
+                el.classList.add('ring-2', 'ring-rose-400');
             } else {
-                el.classList.remove('ring-2', 'ring-rose-300');
+                el.classList.remove('ring-2', 'ring-rose-400');
             }
         });
 
         const photoInput = form.querySelector('[name="photos[]"]');
         if (photoInput && photoInput.files && photoInput.files.length === 0) {
-            const draftPhotosJson = localStorage.getItem('room_draft_photos');
+            const draftPhotosJson = localStorage.getItem('agent_room_draft_photos');
             if (!draftPhotosJson) {
-                errors.push('Step 5: At least one photo is required');
+                errors.push('Step 5: At least one property photo is required');
             }
         }
 
@@ -713,7 +1115,7 @@
         showStep(step);
         const pane = document.querySelector(`.step-pane[data-step="${step}"]`);
         if (pane) {
-            const firstError = pane.querySelector('.ring-rose-300');
+            const firstError = pane.querySelector('.ring-rose-400');
             if (firstError) {
                 setTimeout(() => firstError.focus(), 200);
             }
@@ -763,8 +1165,8 @@
 
         const errors = validateAllSteps();
         if (errors.length > 0) {
-            toastr && toastr.error(errors[0] + (errors.length > 1 ? ` (+${errors.length - 1} more)` : ''), 'Please complete these fields');
-            const firstErrorEl = form.querySelector('.ring-rose-300');
+            toastr && toastr.error(errors[0] + (errors.length > 1 ? ` (+${errors.length - 1} more)` : ''), 'Missing Information');
+            const firstErrorEl = form.querySelector('.ring-rose-400');
             if (firstErrorEl) {
                 const stepPane = firstErrorEl.closest('.step-pane');
                 if (stepPane) {
@@ -793,22 +1195,15 @@
             });
             const data = await res.json().catch(() => ({}));
             if (res.ok && (data.success || data.room_id)) {
-                localStorage.removeItem('room_draft_id');
-                localStorage.removeItem('room_draft_data');
+                localStorage.removeItem('agent_room_draft_id');
+                localStorage.removeItem('agent_room_draft_data');
                 const msg = data.message || 'Property published successfully!';
-                if (data.payment_required || data.payment_id) {
-                    toastr && toastr.info(msg + ' Redirecting to payment...', 'Success');
-                    setTimeout(() => {
-                        window.location.href = '/agent/rooms/' + (data.room_id || '') + '/payment';
-                    }, 1500);
-                } else {
-                    toastr && toastr.success(msg, 'Success');
-                    setTimeout(() => {
-                        window.location.href = '/agent/rooms';
-                    }, 1500);
-                }
+                toastr && toastr.success(msg, 'Success');
+                setTimeout(() => {
+                    window.location.href = '{{ route("agent.properties") }}';
+                }, 1500);
             } else {
-                toastr && toastr.error(data.message || 'Could not publish. Please try again.', 'Error');
+                toastr && toastr.error(data.message || 'Could not publish. Please check required fields.', 'Error');
                 isPublishing = false;
                 $('publishBtn').disabled = false;
                 $('publishBtn').innerHTML = '<i class="fas fa-rocket text-xs"></i> Publish Property';
@@ -847,22 +1242,17 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const div = document.createElement('div');
-                div.className = 'relative aspect-square rounded-lg overflow-hidden border border-slate-200';
-                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">${i === 0 ? '<span class="absolute top-1 left-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">COVER</span>' : ''}`;
+                div.className = 'relative aspect-square rounded-xl overflow-hidden border border-slate-200 shadow-sm';
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">${i === 0 ? '<span class="absolute top-1 left-1 bg-indigo-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow">COVER</span>' : ''}`;
                 photoPreview.appendChild(div);
             };
             reader.readAsDataURL(file);
         });
     }
 
-    document.querySelectorAll('.broker-purpose-radio').forEach(r => {
-        r.addEventListener('change', toggleBrokerPurpose);
-    });
-    toggleBrokerPurpose();
-
+    updatePurposeCards();
     showStep(1);
     checkExistingDraft();
 })();
 </script>
 @endsection
-

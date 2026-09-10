@@ -90,12 +90,49 @@ class RoomOption extends Model
         }
 
         if (is_numeric($value)) {
-            return (int) $value;
+            $matched = static::active()->where('group', $group)->where('id', (int) $value)->value('id');
+            if ($matched) {
+                return (int) $matched;
+            }
         }
 
-        $option = static::active()->where('group', $group)->where('key', (string) $value)->first();
+        $str = trim((string) $value);
+        $slugU = \Illuminate\Support\Str::slug($str, '_');
+        $slugD = \Illuminate\Support\Str::slug($str, '-');
+        $lower = strtolower($str);
 
-        return $option?->id;
+        // Common real estate synonym mappings
+        $synonyms = [
+            'anyone' => 'any',
+            'all' => 'any',
+            'bachelor' => 'bachelors',
+            'studio' => 'studio_apartment',
+            'pg unit' => 'pg',
+            'commercial unit' => null,
+            'plot' => null,
+            'company / corporate' => 'company_lease',
+        ];
+
+        if (array_key_exists($lower, $synonyms)) {
+            if ($synonyms[$lower] === null) {
+                return null;
+            }
+            $slugU = $synonyms[$lower];
+        }
+
+        return static::active()
+            ->where('group', $group)
+            ->where(function ($q) use ($str, $slugU, $slugD, $lower) {
+                $q->where('key', $str)
+                  ->orWhere('key', $slugU)
+                  ->orWhere('key', $slugD)
+                  ->orWhere('label', $str)
+                  ->orWhere('label', 'like', "%{$str}%");
+                if (str_starts_with($lower, 'any')) {
+                    $q->orWhere('key', 'any');
+                }
+            })
+            ->value('id');
     }
 
     public static function resolveOption(string $group, $value, bool $includeInactive = false): ?self

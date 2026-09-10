@@ -69,7 +69,7 @@ abstract class Controller
 
         foreach ($map as $from => $to) {
             if (array_key_exists($from, $data)) {
-                $data[$to] = $data[$from];
+                $data[$to] = \App\Models\RoomOption::resolveId($from, $data[$from]);
                 unset($data[$from]);
             }
         }
