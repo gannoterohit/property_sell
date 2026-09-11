@@ -5,12 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\ComplaintReply;
 use App\Models\Room;
-use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
-use App\Mail\BrandedMessageMail;
 
 class ComplaintController extends Controller
 {
@@ -54,31 +51,8 @@ class ComplaintController extends Controller
         $complaint = $request->user()->complaints()->create($data);
         $complaint->activities()->create(['actor_id' => $request->user()->id, 'type' => 'created', 'status_to' => 'submitted', 'description' => 'Complaint submitted.']);
 
-        try {
-            \App\Models\AdminNotification::send(
-                'complaint_submitted',
-                'New Complaint Filed',
-                'Ticket #' . $complaint->ticket_number . ' by ' . ($request->user()?->name ?? 'User'),
-                route('admin.complaints.show', $complaint->id),
-                'fa-shield-halved'
-            );
-        } catch (\Throwable $e) {
-            report($e);
-        }
-
-        try {
-            $adminEmail = Setting::get('contact_email', config('mail.from.address'));
-            Mail::to($adminEmail)->send(new BrandedMessageMail(
-                "New complaint {$complaint->ticket_number}", 'A new complaint needs review',
-                'A user has submitted a new complaint. Review the ticket and assign it to the appropriate team member.',
-                'Admin notification', 'Review complaint', route('admin.complaints.show', $complaint),
-                ['Ticket' => $complaint->ticket_number, 'Subject' => $complaint->subject], 'warning'
-            ));
-        } catch (\Throwable $e) {
-            report($e);
-        }
-
-        // Send acknowledgement email & notification to user
+        // NotificationService handles: user bell, user Firebase push, user email,
+        // admin bell notification, and admin email — all in one place (no duplicates).
         \App\Services\NotificationService::notifyComplaintSubmitted($request->user(), $complaint);
 
         return redirect()->route('complaints.show', $complaint)->with('success', 'Complaint submitted. Your ticket number is ' . $complaint->ticket_number . '.');
@@ -119,6 +93,13 @@ class ComplaintController extends Controller
                 "Complainant {$request->user()->name} replied to ticket #{$complaint->ticket_number}",
                 route('admin.complaints.show', $complaint),
                 'fa-comments'
+            );
+
+            \App\Services\FirebaseService::sendToAdmins(
+                "Reply on Ticket #{$complaint->ticket_number} 💬",
+                "{$request->user()->name} added a reply to complaint #{$complaint->ticket_number}",
+                ['type' => 'complaint_reply', 'ticket' => (string) $complaint->ticket_number],
+                route('admin.complaints.show', $complaint)
             );
         } catch (\Throwable $ne) {
             report($ne);

@@ -79,7 +79,7 @@ class NotificationService
                 }
             }
 
-            // 4. Admin Panel Notification
+            // 4. Admin Panel Notification & Firebase Push
             try {
                 $owner = $room->owner;
                 AdminNotification::send(
@@ -88,6 +88,13 @@ class NotificationService
                     "Tenant {$user->name} unlocked contact for room '{$room->title}' (Owner: " . ($owner->name ?? 'N/A') . ")",
                     route('admin.all-rooms', ['search' => $room->title]),
                     'fa-key'
+                );
+
+                FirebaseService::sendToAdmins(
+                    "Contact Unlocked 🔑",
+                    "Tenant {$user->name} unlocked contact for '{$room->title}'",
+                    ['type' => 'lead_unlock', 'room_id' => (string) $room->id],
+                    route('admin.all-rooms', ['search' => $room->title])
                 );
             } catch (\Exception $adminEx) {
                 Log::warning("Admin notification for unlock failed: " . $adminEx->getMessage());
@@ -205,7 +212,7 @@ class NotificationService
                 }
             }
 
-            // 4. Admin Panel Notification & Email Alert
+            // 4. Admin Panel Notification, Firebase Push & Email Alert
             try {
                 AdminNotification::send(
                     'payment_received',
@@ -213,6 +220,14 @@ class NotificationService
                     "Payment of {$amountLabel} received from {$user->name} ({$user->role}) for {$paymentLabel}",
                     route('admin.payments.index'),
                     'fa-credit-card'
+                );
+
+                // Admin Firebase Push
+                FirebaseService::sendToAdmins(
+                    "New Payment Received 💰",
+                    "{$amountLabel} from {$user->name} ({$user->role}) for {$paymentLabel}.",
+                    ['type' => 'payment_received', 'amount' => (string) $payment->amount],
+                    route('admin.payments.index')
                 );
 
                 $adminEmail = self::getAdminEmail();
@@ -383,7 +398,7 @@ class NotificationService
                 default  => route('home'),
             };
 
-            // 1. Bell notification
+            // 1. Bell notification to User
             try {
                 UserNotification::send(
                     $user->id,
@@ -397,7 +412,7 @@ class NotificationService
                 Log::warning("Welcome bell notification failed: " . $e->getMessage());
             }
 
-            // 2. Firebase Push Notification
+            // 2. Firebase Push Notification to User
             FirebaseService::sendToUser(
                 $user,
                 "Welcome to ApnaNest! 🎉",
@@ -406,7 +421,7 @@ class NotificationService
                 $actionUrl
             );
 
-            // 2. Welcome Email
+            // 3. Welcome Email to User
             if ($user->email) {
                 try {
                     Mail::to($user->email)->send(new BrandedMessageMail(
@@ -429,6 +444,33 @@ class NotificationService
                     Log::warning("Welcome email failed: " . $mailEx->getMessage());
                 }
             }
+
+            // 4. Admin Bell Notification — new user registered
+            try {
+                $adminUrl = route('admin.members.index');
+                AdminNotification::send(
+                    'new_user_registration',
+                    "New {$roleLabel} Registered: {$user->name}",
+                    "New user '{$user->name}' ({$user->email}) registered as {$roleLabel} on ApnaNest.",
+                    $adminUrl,
+                    'fa-user-plus'
+                );
+            } catch (\Exception $adminEx) {
+                Log::warning("Admin new-user bell notification failed: " . $adminEx->getMessage());
+            }
+
+            // 5. Admin Firebase Push — new user registered
+            try {
+                FirebaseService::sendToAdmins(
+                    "New {$roleLabel} Registered 👤",
+                    "{$user->name} ({$user->email}) joined ApnaNest as {$roleLabel}.",
+                    ['type' => 'new_user_registration', 'user_id' => (string) $user->id],
+                    route('admin.members.index')
+                );
+            } catch (\Exception $fbEx) {
+                Log::warning("Admin Firebase push for new user failed: " . $fbEx->getMessage());
+            }
+
         } catch (\Exception $e) {
             Log::error("NotificationService notifyWelcome error: " . $e->getMessage());
         }
@@ -455,7 +497,19 @@ class NotificationService
                 'fa-user-tie'
             );
 
-            // 2. Admin Email alert
+            // 2. Admin Firebase Push
+            try {
+                FirebaseService::sendToAdmins(
+                    "New Agent Application 👔",
+                    "{$broker->name}{$agency} registered as broker. Pending verification.",
+                    ['type' => 'new_broker_registration', 'broker_id' => (string) $broker->id],
+                    $actionUrl
+                );
+            } catch (\Exception $fbEx) {
+                Log::warning("Admin Firebase push for new broker failed: " . $fbEx->getMessage());
+            }
+
+            // 3. Admin Email alert
             $adminEmail = self::getAdminEmail();
             if ($adminEmail) {
                 try {
@@ -507,7 +561,19 @@ class NotificationService
                 'fa-building'
             );
 
-            // 2. Admin Email alert
+            // 2. Admin Firebase Push
+            try {
+                FirebaseService::sendToAdmins(
+                    "New Property Listed 🏠",
+                    "'{$room->title}' in " . ($room->city ?: 'Unknown') . " by {$hostName}. Needs review.",
+                    ['type' => 'room_posted', 'room_id' => (string) $room->id],
+                    $actionUrl
+                );
+            } catch (\Exception $fbEx) {
+                Log::warning("Admin Firebase push for new property failed: " . $fbEx->getMessage());
+            }
+
+            // 3. Admin Email alert
             $adminEmail = self::getAdminEmail();
             if ($adminEmail) {
                 try {
@@ -895,7 +961,15 @@ class NotificationService
                 Log::warning("Admin complaint notification failed: " . $adminEx->getMessage());
             }
 
-            // 5. Admin Email Alert
+            // 5. Admin Firebase Push Notification
+            FirebaseService::sendToAdmins(
+                "New Support Ticket #{$ticketNumber} ⚠️",
+                "Submitted by {$user->name}: " . \Illuminate\Support\Str::limit($complaint->subject ?? 'N/A', 40),
+                ['type' => 'complaint_submitted', 'ticket' => (string) $ticketNumber],
+                $adminUrl
+            );
+
+            // 6. Admin Email Alert
             $adminEmail = self::getAdminEmail();
             if ($adminEmail) {
                 try {

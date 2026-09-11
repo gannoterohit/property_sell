@@ -187,6 +187,16 @@ class ComplaintController extends Controller
                     route('complaints.show', $complaint),
                     'fa-comments'
                 );
+
+                if ($complaint->user) {
+                    \App\Services\FirebaseService::sendToUser(
+                        $complaint->user,
+                        "Support Replied: #{$complaint->ticket_number} 💬",
+                        \Illuminate\Support\Str::limit($data['message'], 80),
+                        ['type' => 'complaint_reply', 'complaint_id' => (string) $complaint->id],
+                        route('complaints.show', $complaint)
+                    );
+                }
             } catch (\Throwable $ue) {
                 report($ue);
             }

@@ -29,6 +29,7 @@ Route::middleware(['auth:sanctum', 'role:admin', 'admin.permission', 'admin.acti
     Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead']);
     Route::get('/notifications/unread-count', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'unreadCount']);
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'destroy']);
     Route::post('/broadcast/send', [\App\Http\Controllers\Admin\AdminBroadcastController::class, 'send']);
 
     // ── User & Owner Management ─────────────

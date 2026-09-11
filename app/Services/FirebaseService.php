@@ -189,6 +189,37 @@ class FirebaseService
     }
 
     /**
+     * Send push notification to ALL admin users (role = admin).
+     * Useful for: new user registration, new property, new complaint, payment, etc.
+     */
+    public static function sendToAdmins(string $title, string $body, array $data = [], ?string $link = null): void
+    {
+        if (!self::isConfigured()) {
+            return;
+        }
+
+        try {
+            $admins = \App\Models\User::where('role', 'admin')
+                ->where(function ($q) {
+                    $q->whereNotNull('fcm_token')
+                      ->orWhereNotNull('web_push_token');
+                })
+                ->get(['id', 'fcm_token', 'web_push_token']);
+
+            foreach ($admins as $admin) {
+                if ($admin->fcm_token) {
+                    self::sendToToken($admin->fcm_token, $title, $body, $data, $link);
+                }
+                if ($admin->web_push_token) {
+                    self::sendToToken($admin->web_push_token, $title, $body, $data, $link);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('FirebaseService::sendToAdmins exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Check if Firebase is enabled in settings and configured (server key exists).
      */
     public static function isConfigured(): bool

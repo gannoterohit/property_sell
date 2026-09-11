@@ -36,6 +36,13 @@ class ContactController extends Controller
                     route('admin.contact-messages.index'),
                     'fa-inbox'
                 );
+
+                \App\Services\FirebaseService::sendToAdmins(
+                    'New Contact Enquiry 📩',
+                    'From ' . $data['name'] . ': ' . \Illuminate\Support\Str::limit($data['subject'] ?? $data['message'], 50),
+                    ['type' => 'contact_inquiry'],
+                    route('admin.contact-messages.index')
+                );
             } catch (\Throwable $e) {
                 report($e);
             }

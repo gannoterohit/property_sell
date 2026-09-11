@@ -152,6 +152,13 @@ class ApiGeneralController extends BaseApiController
                 route('admin.contact-messages.index'),
                 'fa-envelope'
             );
+
+            \App\Services\FirebaseService::sendToAdmins(
+                'New Contact Enquiry (App) 📩',
+                'From ' . $request->name . ': ' . \Illuminate\Support\Str::limit($request->message, 60),
+                ['type' => 'contact_inquiry'],
+                route('admin.contact-messages.index')
+            );
         } catch (\Throwable $e) {
             report($e);
         }

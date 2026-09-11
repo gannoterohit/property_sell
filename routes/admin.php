@@ -47,6 +47,8 @@ Route::middleware(['auth', 'role:admin', 'admin.permission', 'admin.activity'])
     Route::match(['get', 'post'], '/notifications/{notification}/read', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markRead'])->name('notifications.markRead');
     Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::get('/notifications/unread-count', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifications/clear-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'clearAll'])->name('notifications.clearAll');
     Route::get('/broadcast', [\App\Http\Controllers\Admin\AdminBroadcastController::class, 'index'])->name('broadcast.index');
     Route::post('/broadcast/send', [\App\Http\Controllers\Admin\AdminBroadcastController::class, 'send'])->name('broadcast.send');
 
