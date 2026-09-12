@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OtpMail extends Mailable implements ShouldQueue
+class OtpMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -29,7 +29,11 @@ class OtpMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your ApnaNest verification code',
+            from: new \Illuminate\Mail\Mailables\Address(
+                config('mail.from.address', 'rohitgannote9009@gmail.com'),
+                config('mail.from.name', 'ApnaNest')
+            ),
+            subject: "{$this->otp} is your ApnaNest verification code",
         );
     }
 
